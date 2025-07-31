@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Tracker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f2f2f7;
+        }
+
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #007AFF, #5AC8FA);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            width: 300px;
+        }
+
+        .login-box h1 {
+            margin: 0 0 20px 0;
+            font-size: 28px;
+            color: #333;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 15px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .login-box button:hover {
+            background: #0056b3;
+        }
+
+        .error {
+            color: #FF3B30;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .app {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .app h1 {
+            text-align: center;
+            margin: 0 0 30px 0;
+            font-size: 32px;
+            color: #333;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #007AFF, #5AC8FA);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .buttons {
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn-green {
+            background: #34C759;
+        }
+
+        .btn-green:hover {
+            background: #28a745;
+        }
+
+        .btn-red {
+            background: #FF3B30;
+        }
+
+        .btn-red:hover {
+            background: #dc3545;
+        }
+
+        .btn-gray {
+            background: #8E8E93;
+        }
+
+        .btn-gray:hover {
+            background: #6c757d;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .currency {
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .profit-positive {
+            color: #34C759;
+            font-weight: 600;
+        }
+
+        .profit-negative {
+            color: #FF3B30;
+            font-weight: 600;
+        }
+
+        .delete-btn {
+            background: #FF3B30;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #dc3545;
+        }
+
+        .track-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        .track-btn:hover {
+            background: #0056b3;
+        }
+
+        .tracking-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal h2 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .modal h3 {
+            margin: 20px 0 15px 0;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .card-list {
+            margin: 15px 0;
+        }
+
+        .card-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h1>🔐 Purchase Tracker</h1>
+            <p>Enter password to continue</p>
+            <input type="password" id="passwordField" placeholder="Password">
+            <button onclick="attemptLogin()">Login</button>
+            <div id="errorMsg" class="error"></div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="app">
+        <h1>Credit Card Purchase & Resale Tracker</h1>
+        
+        <div class="summary">
+            <div class="summary-card">
+                <h3>Total Purchases</h3>
+                <div class="value" id="totalPurchases">$0.00</div>
+            </div>
+            <div class="summary-card">
+                <h3>Total Cash Back</h3>
+                <div class="value" id="totalCashBack">$0.00</div>
+            </div>
+            <div class="summary-card">
+                <h3>Total Revenue</h3>
+                <div class="value" id="totalRevenue">$0.00</div>
+            </div>
+            <div class="summary-card">
+                <h3>Net Profit</h3>
+                <div class="value" id="netProfit">$0.00</div>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn" onclick="addRow()">Add New Purchase</button>
+            <button class="btn btn-gray" onclick="openCardModal()">Manage Credit Cards</button>
+            <button class="btn btn-green" onclick="exportCSV()">Export CSV</button>
+            <button class="btn btn-gray" onclick="logout()">Logout</button>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Item</th>
+                    <th>Card</th>
+                    <th>Amount</th>
+                    <th>Cash Back</th>
+                    <th>Tracking</th>
+                    <th>Received</th>
+                    <th>Resold?</th>
+                    <th>Sale Price</th>
+                    <th>Profit</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Credit Card Management Modal -->
+    <div id="cardModal" class="modal">
+        <div class="modal-content">
+            <h2>Manage Credit Cards</h2>
+            
+            <div class="card-list" id="cardList"></div>
+            
+            <h3>Add New Credit Card</h3>
+            <div class="form-group">
+                <label for="newCardName">Card Name:</label>
+                <input type="text" id="newCardName" placeholder="e.g., Capital One Venture">
+            </div>
+            <div class="form-group">
+                <label for="newCardRate">Cash Back Rate (%):</label>
+                <input type="number" id="newCardRate" step="0.01" placeholder="e.g., 2.5">
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn" onclick="addNewCard()">Add Card</button>
+                <button class="btn btn-gray" onclick="closeCardModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple login system
+        function attemptLogin() {
+            const password = document.getElementById('passwordField').value;
+            const errorDiv = document.getElementById('errorMsg');
+            
+            if (password === '24Florence!') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                loadSampleData();
+                startAutoLogout();
+            } else {
+                errorDiv.textContent = 'Incorrect password';
+                document.getElementById('passwordField').value = '';
+            }
+        }
+
+        // Auto logout after 10 minutes
+        let logoutTimer;
+        function startAutoLogout() {
+            clearTimeout(logoutTimer);
+            logoutTimer = setTimeout(logout, 600000); // 10 minutes
+        }
+
+        function logout() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('passwordField').value = '';
+            document.getElementById('errorMsg').textContent = '';
+            clearTimeout(logoutTimer);
+        }
+
+        // Reset timer on activity
+        document.addEventListener('click', startAutoLogout);
+        document.addEventListener('keypress', startAutoLogout);
+
+        // Allow Enter key for login
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
+                attemptLogin();
+            }
+        });
+
+        // Credit cards and rates
+        let cards = {
+            'Chase Reserve': 0.01,
+            'Wells Fargo': 0.02,
+            'Farmers Credit Union': 0.025
+        };
+
+        // Credit Card Management Functions
+        function openCardModal() {
+            document.getElementById('cardModal').style.display = 'block';
+            updateCardList();
+        }
+
+        function closeCardModal() {
+            document.getElementById('cardModal').style.display = 'none';
+        }
+
+        function updateCardList() {
+            const cardList = document.getElementById('cardList');
+            cardList.innerHTML = '';
+            
+            for (const [cardName, rate] of Object.entries(cards)) {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'card-item';
+                cardItem.innerHTML = `
+                    <span>${cardName} - ${(rate * 100).toFixed(1)}%</span>
+                    <button class="btn btn-red" onclick="deleteCard('${cardName}')">Delete</button>
+                `;
+                cardList.appendChild(cardItem);
+            }
+        }
+
+        function addNewCard() {
+            const name = document.getElementById('newCardName').value.trim();
+            const rate = parseFloat(document.getElementById('newCardRate').value);
+            
+            if (!name || isNaN(rate) || rate < 0) {
+                alert('Please enter a valid card name and rate.');
+                return;
+            }
+            
+            cards[name] = rate / 100;
+            updateCardList();
+            updateAllCardDropdowns();
+            
+            document.getElementById('newCardName').value = '';
+            document.getElementById('newCardRate').value = '';
+        }
+
+        function deleteCard(cardName) {
+            if (Object.keys(cards).length <= 1) {
+                alert('You must have at least one credit card.');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete ${cardName}?`)) {
+                delete cards[cardName];
+                updateCardList();
+                updateAllCardDropdowns();
+                updateTotals();
+            }
+        }
+
+        function updateAllCardDropdowns() {
+            const selects = document.querySelectorAll('#tableBody select');
+            selects.forEach(select => {
+                if (select.parentElement.cellIndex === 2) { // Card column
+                    const currentValue = select.value;
+                    select.innerHTML = createCardOptions();
+                    if (cards[currentValue]) {
+                        select.value = currentValue;
+                    } else {
+                        select.value = Object.keys(cards)[0];
+                    }
+                }
+            });
+        }
+
+        function createCardOptions(selectedCard = '') {
+            let options = '';
+            for (const [cardName, rate] of Object.entries(cards)) {
+                const percentage = (rate * 100).toFixed(1);
+                const selected = cardName === selectedCard ? 'selected' : '';
+                options += `<option value="${cardName}" ${selected}>${cardName} (${percentage}%)</option>`;
+            }
+            return options;
+        }
+
+        // Sample data
+        const sampleData = [
+            {
+                date: '2024-01-15',
+                item: 'iPhone 15 Pro',
+                card: 'Chase Reserve',
+                amount: 999.00,
+                tracking: '1Z999AA1234567890',
+                received: '2024-01-18',
+                resold: 'Yes',
+                salePrice: 1150.00
+            },
+            {
+                date: '2024-01-20',
+                item: 'Nike Air Jordan',
+                card: 'Wells Fargo',
+                amount: 180.00,
+                tracking: '1Z888CC1122334455',
+                received: '2024-01-23',
+                resold: 'Yes',
+                salePrice: 220.00
+            },
+            {
+                date: '2024-02-01',
+                item: 'MacBook Air M3',
+                card: 'Farmers Credit Union',
+                amount: 1299.00,
+                tracking: '1Z555EE7788990011',
+                received: '2024-02-04',
+                resold: 'Yes',
+                salePrice: 1450.00
+            }
+        ];
+
+        function loadSampleData() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            sampleData.forEach(data => {
+                addRowWithData(data);
+            });
+            
+            updateTotals();
+        }
+
+        function addRow() {
+            addRowWithData({});
+        }
+
+        function addRowWithData(data = {}) {
+            const tbody = document.getElementById('tableBody');
+            const row = document.createElement('tr');
+            
+            const cashBack = (data.amount || 0) * (cards[data.card] || 0);
+            const profit = (data.salePrice || 0) - (data.amount || 0) + cashBack;
+            
+            row.innerHTML = `
+                <td><input type="date" value="${data.date || ''}" onchange="updateTotals()"></td>
+                <td><input type="text" value="${data.item || ''}" placeholder="Item" onchange="updateTotals()"></td>
+                <td>
+                    <select onchange="updateTotals()">
+                        ${createCardOptions(data.card)}
+                    </select>
+                </td>
+                <td><input type="number" value="${data.amount || ''}" placeholder="0.00" step="0.01" onchange="updateTotals()"></td>
+                <td class="currency">$${cashBack.toFixed(2)}</td>
+                <td class="tracking-cell">
+                    <input type="text" value="${data.tracking || ''}" placeholder="Tracking #" style="width: 120px;">
+                    <button class="track-btn" onclick="trackPackage('${data.tracking || ''}')">Track</button>
+                </td>
+                <td><input type="date" value="${data.received || ''}" onchange="updateTotals()"></td>
+                <td>
+                    <select onchange="updateTotals()">
+                        <option value="No" ${data.resold !== 'Yes' ? 'selected' : ''}>No</option>
+                        <option value="Yes" ${data.resold === 'Yes' ? 'selected' : ''}>Yes</option>
+                    </select>
+                </td>
+                <td><input type="number" value="${data.salePrice || ''}" placeholder="0.00" step="0.01" onchange="updateTotals()"></td>
+                <td class="currency ${profit >= 0 ? 'profit-positive' : 'profit-negative'}">$${profit.toFixed(2)}</td>
+                <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
+            `;
+            
+            tbody.appendChild(row);
+            updateTotals();
+        }
+
+        function deleteRow(btn) {
+            if (confirm('Delete this entry?')) {
+                btn.closest('tr').remove();
+                updateTotals();
+            }
+        }
+
+        function trackPackage(tracking) {
+            if (tracking) {
+                window.open(`https://www.google.com/search?q=${tracking} tracking`, '_blank');
+            } else {
+                alert('No tracking number available');
+            }
+        }
+
+        function updateTotals() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            let totalPurchases = 0;
+            let totalCashBack = 0;
+            let totalRevenue = 0;
+            let totalProfit = 0;
+            
+            rows.forEach(row => {
+                const cells = row.cells;
+                const amount = parseFloat(cells[3].querySelector('input').value) || 0;
+                const card = cells[2].querySelector('select').value;
+                const salePrice = parseFloat(cells[8].querySelector('input').value) || 0;
+                
+                const cashBack = amount * (cards[card] || 0);
+                const profit = salePrice - amount + cashBack;
+                
+                // Update cash back display
+                cells[4].textContent = '$' + cashBack.toFixed(2);
+                
+                // Update profit display
+                cells[9].textContent = '$' + profit.toFixed(2);
+                cells[9].className = 'currency ' + (profit >= 0 ? 'profit-positive' : 'profit-negative');
+                
+                totalPurchases += amount;
+                totalCashBack += cashBack;
+                totalRevenue += salePrice;
+                totalProfit += profit;
+            });
+            
+            document.getElementById('totalPurchases').textContent = '$' + totalPurchases.toFixed(2);
+            document.getElementById('totalCashBack').textContent = '$' + totalCashBack.toFixed(2);
+            document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toFixed(2);
+            
+            const netProfitEl = document.getElementById('netProfit');
+            netProfitEl.textContent = '$' + totalProfit.toFixed(2);
+            netProfitEl.className = 'value ' + (totalProfit >= 0 ? 'profit-positive' : 'profit-negative');
+        }
+
+        function exportCSV() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            let csv = 'Date,Item,Card,Amount,Cash Back,Tracking,Received,Resold,Sale Price,Profit\n';
+            
+            rows.forEach(row => {
+                const cells = row.cells;
+                const rowData = [
+                    cells[0].querySelector('input').value,
+                    cells[1].querySelector('input').value,
+                    cells[2].querySelector('select').value,
+                    cells[3].querySelector('input').value,
+                    cells[4].textContent.replace('$', ''),
+                    cells[5].querySelector('input').value,
+                    cells[6].querySelector('input').value,
+                    cells[7].querySelector('select').value,
+                    cells[8].querySelector('input').value,
+                    cells[9].textContent.replace('$', '')
+                ];
+                csv += rowData.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'purchase_tracker.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show login screen by default
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('cardModal');
+            if (event.target === modal) {
+                closeCardModal();
+            }
+        }
+    </script>
+</body>
+</html>
