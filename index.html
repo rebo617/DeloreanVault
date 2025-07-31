@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase & Resale Tracker</title>
+    <style>
+        /* Apple-inspired design system */
+        :root {
+            --primary-blue: #007AFF;
+            --secondary-blue: #5AC8FA;
+            --green: #34C759;
+            --red: #FF3B30;
+            --orange: #FF9500;
+            --gray-1: #F2F2F7;
+            --gray-2: #E5E5EA;
+            --gray-3: #D1D1D6;
+            --gray-4: #C7C7CC;
+            --gray-5: #AEAEB2;
+            --gray-6: #8E8E93;
+            --text-primary: #000000;
+            --text-secondary: #3C3C43;
+            --text-tertiary: #3C3C4399;
+            --background: #FFFFFF;
+            --surface: #F2F2F7;
+            --border: rgba(60, 60, 67, 0.29);
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--surface);
+            color: var(--text-primary);
+            line-height: 1.47058823529;
+            font-size: 17px;
+            font-weight: 400;
+        }
+        
+        .container {
+            background: var(--background);
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: 0 4px 16px var(--shadow);
+            max-width: 1600px;
+            margin: 0 auto;
+            border: 1px solid var(--border);
+        }
+        
+        h1 {
+            color: var(--text-primary);
+            text-align: center;
+            margin: 0 0 32px 0;
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 0.374px;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .summary-card {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.2);
+            border: none;
+        }
+        
+        .summary-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 15px;
+            font-weight: 600;
+            opacity: 0.9;
+            letter-spacing: -0.24px;
+        }
+        
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 0.364px;
+        }
+        
+        .button-container {
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.43px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 4px rgba(0, 122, 255, 0.25);
+        }
+        
+        .btn-export {
+            background: var(--green);
+            box-shadow: 0 2px 8px rgba(52, 199, 89, 0.25);
+        }
+        
+        .btn-export:hover {
+            background: #28a745;
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.35);
+        }
+        
+        .btn-danger {
+            background: var(--red);
+            box-shadow: 0 2px 8px rgba(255, 59, 48, 0.25);
+        }
+        
+        .btn-danger:hover {
+            background: #dc3545;
+            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.35);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-5);
+            box-shadow: 0 2px 8px rgba(142, 142, 147, 0.25);
+        }
+        
+        .btn-secondary:hover {
+            background: #6c757d;
+            box-shadow: 0 4px 12px rgba(142, 142, 147, 0.35);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1800px;
+            table-layout: fixed;
+        }
+        
+        /* Fixed column widths for better alignment */
+        th:nth-child(1), td:nth-child(1) { width: 120px; }
+        th:nth-child(2), td:nth-child(2) { width: 160px; }
+        th:nth-child(3), td:nth-child(3) { width: 150px; }
+        th:nth-child(4), td:nth-child(4) { width: 90px; }
+        th:nth-child(5), td:nth-child(5) { width: 150px; }
+        th:nth-child(6), td:nth-child(6) { width: 80px; }
+        th:nth-child(7), td:nth-child(7) { width: 180px; }
+        th:nth-child(8), td:nth-child(8) { width: 110px; }
+        th:nth-child(9), td:nth-child(9) { width: 120px; }
+        th:nth-child(10), td:nth-child(10) { width: 80px; }
+        th:nth-child(11), td:nth-child(11) { width: 90px; }
+        th:nth-child(12), td:nth-child(12) { width: 180px; }
+        th:nth-child(13), td:nth-child(13) { width: 110px; }
+        th:nth-child(14), td:nth-child(14) { width: 120px; }
+        th:nth-child(15), td:nth-child(15) { width: 90px; }
+        th:nth-child(16), td:nth-child(16) { width: 90px; }
+        th:nth-child(17), td:nth-child(17) { width: 80px; }
+        
+        th {
+            background: var(--surface);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 16px 8px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            letter-spacing: -0.24px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--gray-2);
+            font-size: 15px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        /* Specific cell content alignment */
+        .cash-back-display,
+        .gross-profit-display,
+        .net-profit-display {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            text-align: right;
+            padding-right: 12px;
+        }
+        
+        .status-cell {
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            padding: 8px;
+            white-space: nowrap;
+        }
+        
+        .tracking-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px;
+        }
+        
+        /* Ensure button alignment in cells */
+        td .delete-btn {
+            display: block;
+            margin: 0 auto;
+        }
+        
+        tr:hover {
+            background-color: var(--gray-1);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 15px;
+            background: var(--background);
+            color: var(--text-primary);
+            font-family: inherit;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            text-align: left; /* Default left alignment */
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+        
+        .date-input {
+            width: 110px;
+            min-width: 110px;
+            text-align: center;
+        }
+        
+        .currency-input {
+            width: 80px;
+            min-width: 80px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .tracking-input {
+            width: 130px;
+            min-width: 130px;
+            font-size: 13px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            text-align: center;
+        }
+        
+        .item-input {
+            width: 150px;
+            min-width: 150px;
+            text-align: left;
+        }
+        
+        .card-select {
+            width: 140px;
+            min-width: 140px;
+            font-size: 13px;
+            text-align: left;
+        }
+        
+        /* Specific input alignments for table cells */
+        td input[type="date"] {
+            text-align: center;
+        }
+        
+        td input[type="text"]:not(.tracking-input):not(.item-input) {
+            text-align: center;
+        }
+        
+        td select {
+            text-align: left;
+        }
+        
+        /* Select dropdown alignment fix */
+        select option {
+            text-align: left;
+        }
+        
+        .card-chase { background-color: rgba(0, 122, 255, 0.05) !important; }
+        .card-wells { background-color: rgba(52, 199, 89, 0.05) !important; }
+        .card-farmers { background-color: rgba(255, 149, 0, 0.05) !important; }
+        .card-custom { background-color: rgba(142, 142, 147, 0.05) !important; }
+        
+        .profit-positive { 
+            color: var(--green); 
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .profit-negative { 
+            color: var(--red); 
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .status-waiting { color: var(--orange); font-weight: 600; }
+        .status-received { color: var(--green); font-weight: 600; }
+        .status-inflight { color: var(--red); font-weight: 600; }
+        .status-delivered { color: var(--green); font-weight: 600; }
+        
+        .delete-btn {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .delete-btn:hover {
+            background: #dc3545;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+        }
+        
+        .track-btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 6px;
+            white-space: nowrap;
+            display: inline-block;
+            transition: all 0.2s ease;
+        }
+        
+        .track-btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+        
+        .tracking-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px;
+        }
+        
+        .status-cell {
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            padding: 8px;
+            white-space: nowrap;
+        }
+        
+        #csvFileInput {
+            display: none;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+        }
+        
+        .modal-content {
+            background-color: var(--background);
+            margin: 10% auto;
+            padding: 32px;
+            border-radius: 20px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border);
+        }
+        
+        .modal h2 {
+            margin: 0 0 24px 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.364px;
+        }
+        
+        .modal h3 {
+            margin: 24px 0 16px 0;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 0.35px;
+        }
+        
+        .modal-buttons {
+            text-align: right;
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .card-list {
+            margin: 20px 0;
+        }
+        
+        .card-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background: var(--surface);
+            transition: all 0.2s ease;
+        }
+        
+        .card-item:hover {
+            background-color: var(--gray-1);
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 17px;
+            letter-spacing: -0.43px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 17px;
+            background: var(--background);
+            color: var(--text-primary);
+            text-align: left;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        /* Login Screen Styles - Apple inspired */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 48px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .login-box h1 {
+            margin: 0 0 24px 0;
+            color: var(--text-primary);
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 0.374px;
+            line-height: 1.1;
+            text-align: center;
+        }
+
+        .login-box p {
+            margin: 0 0 32px 0;
+            color: var(--text-secondary);
+            font-size: 17px;
+            letter-spacing: -0.43px;
+            line-height: 1.47058823529;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .login-form input {
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 17px;
+            outline: none;
+            transition: all 0.2s ease;
+            background: var(--background);
+            color: var(--text-primary);
+            font-family: inherit;
+            text-align: left;
+        }
+
+        .login-form input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        .btn-login {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: -0.43px;
+        }
+
+        .btn-login:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .login-error {
+            color: var(--red);
+            font-size: 15px;
+            margin-top: 12px;
+            min-height: 20px;
+            font-weight: 500;
+        }
+
+        /* Apple-style animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* Improved focus states */
+        .btn:focus-visible {
+            outline: 2px solid var(--primary-blue);
+            outline-offset: 2px;
+        }
+
+        /* Better table cell content alignment */
+        .cash-back-display,
+        .gross-profit-display,
+        .net-profit-display {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+        }
+    </style>
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .login-form input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-error {
+            color: #f44336;
+            font-size: 14px;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <h1>🔐 Purchase Tracker</h1>
+            <p>Please enter your password to access the application</p>
+            <div class="login-form">
+                <input type="password" id="passwordInput" placeholder="Enter password" onkeypress="handlePasswordKeypress(event)">
+                <button onclick="checkPassword()" class="btn-login">Login</button>
+            </div>
+            <div id="loginError" class="login-error"></div>
+        </div>
+    </div>
+
+    <div id="mainApp" class="container" style="display: none;">
+        <h1>Credit Card Purchase & Resale Tracker</h1>
+        
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h3>Total Purchases</h3>
+                <p class="value" id="totalPurchases">$0.00</p>
+            </div>
+            <div class="summary-card">
+                <h3>Total Cash Back</h3>
+                <p class="value" id="totalCashBack">$0.00</p>
+            </div>
+            <div class="summary-card">
+                <h3>Total Revenue</h3>
+                <p class="value" id="totalRevenue">$0.00</p>
+            </div>
+            <div class="summary-card">
+                <h3>Net Profit</h3>
+                <p class="value" id="netProfit">$0.00</p>
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button class="btn" onclick="addNewRow()">Add New Purchase</button>
+            <button class="btn btn-secondary" onclick="openCardModal()">Manage Credit Cards</button>
+            <button class="btn btn-export" onclick="exportData()">Export to CSV</button>
+            <button class="btn btn-export" onclick="importData()">Import CSV</button>
+        </div>
+        
+        <input type="file" id="csvFileInput" accept=".csv">
+        
+        <div class="table-container">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th>Purchase Date</th>
+                        <th>Item Description</th>
+                        <th>Credit Card</th>
+                        <th>Purchase Amount</th>
+                        <th>Cash Back Card</th>
+                        <th>Cash Back $</th>
+                        <th>Incoming Tracking</th>
+                        <th>Incoming Status</th>
+                        <th>Date Received</th>
+                        <th>Resold?</th>
+                        <th>Sale Price</th>
+                        <th>Outgoing Tracking</th>
+                        <th>Outgoing Status</th>
+                        <th>Date Shipped</th>
+                        <th>Gross Profit</th>
+                        <th>Net Profit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="dataBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Credit Card Management Modal -->
+    <div id="cardModal" class="modal">
+        <div class="modal-content">
+            <h2>Manage Credit Cards</h2>
+            
+            <div class="card-list" id="cardList">
+            </div>
+            
+            <h3>Add New Credit Card</h3>
+            <div class="form-group">
+                <label for="newCardName">Card Name:</label>
+                <input type="text" id="newCardName" placeholder="e.g., Capital One Venture">
+            </div>
+            <div class="form-group">
+                <label for="newCardRate">Cash Back Rate (%):</label>
+                <input type="number" id="newCardRate" step="0.01" placeholder="e.g., 2.5">
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn" onclick="addNewCard()">Add Card</button>
+                <button class="btn btn-secondary" onclick="closeCardModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Password protection
+        const hashedPassword = "f8e2c4d6a1b3e7f9c8a5b2d4e6f1a9c3b7e5d8f2a4c6b9e1f3a7c5b8d2e4f6a1"; // Hash for "24Florence!"
+        
+        // Auto-logout functionality
+        let inactivityTimer;
+        const INACTIVITY_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
+        
+        // Simple hash function (for demo - in production use proper hashing)
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return Math.abs(hash).toString(16).padStart(8, '0').repeat(8).substring(0, 64);
+        }
+
+        function logout() {
+            sessionStorage.removeItem('authenticated');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+            document.getElementById('loginError').textContent = '';
+            
+            // Clear the timer
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+            }
+            
+            // Show logout message
+            const loginBox = document.querySelector('.login-box p');
+            const originalText = loginBox.textContent;
+            loginBox.textContent = 'Session expired due to inactivity. Please log in again.';
+            loginBox.style.color = '#ff9800';
+            
+            // Reset message after 3 seconds
+            setTimeout(() => {
+                loginBox.textContent = originalText;
+                loginBox.style.color = '#666';
+            }, 3000);
+        }
+
+        function resetInactivityTimer() {
+            // Clear existing timer
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+            }
+            
+            // Only set timer if user is authenticated
+            if (sessionStorage.getItem('authenticated') === 'true') {
+                inactivityTimer = setTimeout(logout, INACTIVITY_TIME);
+            }
+        }
+
+        function setupActivityListeners() {
+            // Events that indicate user activity
+            const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+            
+            events.forEach(event => {
+                document.addEventListener(event, resetInactivityTimer, true);
+            });
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            const password = input.value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (simpleHash(password) === hashedPassword) {
+                // Correct password
+                sessionStorage.setItem('authenticated', 'true');
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                errorDiv.textContent = '';
+                
+                // Start inactivity timer
+                resetInactivityTimer();
+                
+                // Initialize app if not already done
+                if (document.querySelectorAll('#dataBody tr').length === 0) {
+                    initializeApp();
+                }
+            } else {
+                // Wrong password
+                errorDiv.textContent = 'Incorrect password. Please try again.';
+                input.value = '';
+                input.focus();
+                
+                // Add shake animation
+                input.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    input.style.animation = '';
+                }, 500);
+            }
+        }
+
+        function handlePasswordKeypress(event) {
+            if (event.key === 'Enter') {
+                checkPassword();
+            }
+        }
+
+        // Check if already authenticated
+        function checkAuthentication() {
+            if (sessionStorage.getItem('authenticated') === 'true') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                
+                // Start inactivity timer for existing session
+                resetInactivityTimer();
+            } else {
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        // Add shake animation CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize variables
+        let cashBackRates = {
+            'Chase Reserve': 0.01,
+            'Wells Fargo': 0.02,
+            'Farmers Credit Union': 0.025
+        };
+
+        const initialData = [
+            {
+                purchaseDate: '2024-01-15',
+                item: 'iPhone 15 Pro',
+                card: 'Chase Reserve',
+                purchaseAmount: 999.00,
+                cashBackCard: 'Chase Reserve',
+                incomingTracking: '1Z999AA1234567890',
+                dateReceived: '2024-01-18',
+                resold: 'Yes',
+                salePrice: 1150.00,
+                outgoingTracking: '1Z999BB9876543210',
+                dateShipped: '2024-01-25'
+            },
+            {
+                purchaseDate: '2024-01-20',
+                item: 'Nike Air Jordan Retro',
+                card: 'Wells Fargo',
+                purchaseAmount: 180.00,
+                cashBackCard: 'Wells Fargo',
+                incomingTracking: '1Z888CC1122334455',
+                dateReceived: '2024-01-23',
+                resold: 'Yes',
+                salePrice: 220.00,
+                outgoingTracking: '1Z777DD5544332211',
+                dateShipped: '2024-01-28'
+            },
+            {
+                purchaseDate: '2024-02-01',
+                item: 'MacBook Air M3',
+                card: 'Farmers Credit Union',
+                purchaseAmount: 1299.00,
+                cashBackCard: 'Farmers Credit Union',
+                incomingTracking: '1Z555EE7788990011',
+                dateReceived: '2024-02-04',
+                resold: 'Yes',
+                salePrice: 1450.00,
+                outgoingTracking: '1Z444FF1100998877',
+                dateShipped: '2024-02-08'
+            },
+            {
+                purchaseDate: '2024-02-10',
+                item: 'Sony WH-1000XM5 Headphones',
+                card: 'Chase Reserve',
+                purchaseAmount: 349.99,
+                cashBackCard: 'Chase Reserve',
+                incomingTracking: '1Z333GG2233445566',
+                dateReceived: '2024-02-13',
+                resold: 'No',
+                salePrice: 0,
+                outgoingTracking: '',
+                dateShipped: ''
+            },
+            {
+                purchaseDate: '2024-02-15',
+                item: 'Apple Watch Series 9',
+                card: 'Wells Fargo',
+                purchaseAmount: 429.00,
+                cashBackCard: 'Wells Fargo',
+                incomingTracking: '1Z222HH9988776655',
+                dateReceived: '',
+                resold: 'No',
+                salePrice: 0,
+                outgoingTracking: '',
+                dateShipped: ''
+            },
+            {
+                purchaseDate: '2024-02-20',
+                item: 'Dell XPS 13 Laptop',
+                card: 'Farmers Credit Union',
+                purchaseAmount: 899.00,
+                cashBackCard: 'Farmers Credit Union',
+                incomingTracking: '1Z111II5566778899',
+                dateReceived: '2024-02-23',
+                resold: 'Yes',
+                salePrice: 1050.00,
+                outgoingTracking: '1Z000JJ3344556677',
+                dateShipped: '2024-02-27'
+            }
+        ];
+
+        // In-memory data storage
+        let trackerData = null;
+
+        // Currency formatting functions
+        function formatCurrencyDisplay(value) {
+            if (!value || value === 0) return '';
+            const num = parseFloat(value);
+            if (isNaN(num)) return '';
+            return '$' + num.toFixed(2);
+        }
+
+        function handleCurrencyInput(input) {
+            let value = input.value;
+            
+            // Remove dollar sign if present
+            value = value.replace('$', '');
+            
+            // Remove any non-numeric characters except decimal point
+            value = value.replace(/[^\d.]/g, '');
+            
+            // Ensure only one decimal point
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            // Limit to 2 decimal places
+            if (parts[1] && parts[1].length > 2) {
+                value = parts[0] + '.' + parts[1].substring(0, 2);
+            }
+            
+            // Add dollar sign and format
+            if (value && !isNaN(parseFloat(value))) {
+                input.value = '$' + parseFloat(value).toFixed(2);
+            } else if (value === '') {
+                input.value = '';
+            }
+        }
+
+        function getCurrencyValue(input) {
+            if (!input || !input.value) return 0;
+            const value = input.value.replace('$', '');
+            return parseFloat(value) || 0;
+        }
+
+        // Utility functions
+        function getCardClass(card) {
+            const classes = {
+                'Chase Reserve': 'card-chase',
+                'Wells Fargo': 'card-wells',
+                'Farmers Credit Union': 'card-farmers'
+            };
+            return classes[card] || 'card-custom';
+        }
+
+        function createCardOptions(selectedCard = 'Chase Reserve') {
+            const options = [];
+            for (const [cardName, rate] of Object.entries(cashBackRates)) {
+                const percentage = (rate * 100).toFixed(1);
+                options.push({
+                    value: cardName,
+                    text: `${cardName} (${percentage}%)`
+                });
+            }
+            
+            return options.map(option => 
+                `<option value="${option.value}" ${option.value === selectedCard ? 'selected' : ''}>${option.text}</option>`
+            ).join('');
+        }
+
+        // Credit Card Management
+        function openCardModal() {
+            document.getElementById('cardModal').style.display = 'block';
+            updateCardList();
+        }
+
+        function closeCardModal() {
+            document.getElementById('cardModal').style.display = 'none';
+        }
+
+        function updateCardList() {
+            const cardList = document.getElementById('cardList');
+            cardList.innerHTML = '';
+            
+            for (const [cardName, rate] of Object.entries(cashBackRates)) {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'card-item';
+                cardItem.innerHTML = `
+                    <span>${cardName} - ${(rate * 100).toFixed(1)}%</span>
+                    <button class="btn btn-danger delete-btn" onclick="deleteCard('${cardName}')">Delete</button>
+                `;
+                cardList.appendChild(cardItem);
+            }
+        }
+
+        function addNewCard() {
+            const name = document.getElementById('newCardName').value.trim();
+            const rate = parseFloat(document.getElementById('newCardRate').value);
+            
+            if (!name || isNaN(rate) || rate < 0) {
+                alert('Please enter a valid card name and rate.');
+                return;
+            }
+            
+            cashBackRates[name] = rate / 100;
+            updateCardList();
+            updateAllCardSelects();
+            
+            document.getElementById('newCardName').value = '';
+            document.getElementById('newCardRate').value = '';
+            
+            saveDataToStorage();
+        }
+
+        function deleteCard(cardName) {
+            if (Object.keys(cashBackRates).length <= 1) {
+                alert('You must have at least one credit card.');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete ${cardName}?`)) {
+                delete cashBackRates[cardName];
+                updateCardList();
+                updateAllCardSelects();
+                saveDataToStorage();
+            }
+        }
+
+        function updateAllCardSelects() {
+            const selects = document.querySelectorAll('select');
+            selects.forEach(select => {
+                if (select.onchange === handleCardChange || select.onchange === handleChange) {
+                    const currentValue = select.value;
+                    select.innerHTML = createCardOptions(currentValue);
+                    if (!cashBackRates[currentValue]) {
+                        select.value = Object.keys(cashBackRates)[0];
+                        if (select.onchange === handleCardChange) {
+                            handleCardChange(select);
+                        } else {
+                            handleChange(select);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Tracking functions
+        function trackPackage(trackingNumber, type) {
+            if (!trackingNumber) {
+                alert('No tracking number available');
+                return;
+            }
+            
+            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(trackingNumber + ' tracking')}`;
+            window.open(searchUrl, '_blank');
+        }
+
+        function updateTrackingStatus(element, trackingNumber) {
+            const statusCell = element.closest('tr').querySelector('.tracking-status');
+            if (!trackingNumber) {
+                statusCell.textContent = 'No Tracking';
+                statusCell.className = 'tracking-status status-cell';
+                return;
+            }
+            
+            const statuses = ['Waiting Arrival', 'In Transit', 'Received'];
+            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+            
+            statusCell.textContent = randomStatus;
+            statusCell.className = `tracking-status status-cell status-${randomStatus.toLowerCase().replace(' ', '')}`;
+        }
+
+        function updateOutgoingStatus(element, trackingNumber) {
+            const statusCell = element.closest('tr').querySelector('.outgoing-status');
+            if (!trackingNumber) {
+                statusCell.textContent = 'Not Shipped';
+                statusCell.className = 'outgoing-status status-cell';
+                return;
+            }
+            
+            const statuses = ['In Flight', 'Delivered'];
+            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+            
+            statusCell.textContent = randomStatus;
+            statusCell.className = `outgoing-status status-cell status-${randomStatus.toLowerCase().replace(' ', '')}`;
+        }
+
+        // Data persistence functions
+        function saveDataToStorage() {
+            try {
+                const rows = document.querySelectorAll('#dataBody tr');
+                const data = [];
+                
+                rows.forEach(row => {
+                    if (row.cells && row.cells.length >= 17) {
+                        const rowData = {
+                            purchaseDate: row.cells[0].querySelector('input')?.value || '',
+                            item: row.cells[1].querySelector('input')?.value || '',
+                            card: row.cells[2].querySelector('select')?.value || Object.keys(cashBackRates)[0],
+                            purchaseAmount: getCurrencyValue(row.cells[3].querySelector('input')),
+                            cashBackCard: row.cells[4].querySelector('select')?.value || Object.keys(cashBackRates)[0],
+                            incomingTracking: row.cells[6].querySelector('input')?.value || '',
+                            dateReceived: row.cells[8].querySelector('input')?.value || '',
+                            resold: row.cells[9].querySelector('select')?.value || 'No',
+                            salePrice: getCurrencyValue(row.cells[10].querySelector('input')),
+                            outgoingTracking: row.cells[11].querySelector('input')?.value || '',
+                            dateShipped: row.cells[13].querySelector('input')?.value || ''
+                        };
+                        data.push(rowData);
+                    }
+                });
+                
+                trackerData = {
+                    purchases: data,
+                    creditCards: cashBackRates
+                };
+            } catch (error) {
+                console.error('Error saving data:', error);
+            }
+        }
+
+        function loadDataFromStorage() {
+            try {
+                if (trackerData) {
+                    if (trackerData.creditCards) {
+                        cashBackRates = trackerData.creditCards;
+                    }
+                    if (trackerData.purchases && Array.isArray(trackerData.purchases) && trackerData.purchases.length > 0) {
+                        return trackerData.purchases;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+            return initialData;
+        }
+
+        // Row management functions
+        function createRow(data = {}) {
+            const row = document.createElement('tr');
+            row.className = getCardClass(data.card || Object.keys(cashBackRates)[0]);
+            
+            row.innerHTML = `
+                <td><input type="date" class="date-input" value="${data.purchaseDate || ''}" onchange="handleChange(this)"></td>
+                <td><input type="text" class="item-input" placeholder="Item description" value="${data.item || ''}" onchange="handleChange(this)"></td>
+                <td>
+                    <select class="card-select" onchange="handleCardChange(this)">
+                        ${createCardOptions(data.card)}
+                    </select>
+                </td>
+                <td><input type="text" class="currency-input" placeholder="$0.00" value="${data.purchaseAmount ? formatCurrencyDisplay(data.purchaseAmount) : ''}" onchange="handleChange(this)" oninput="handleCurrencyInput(this)"></td>
+                <td>
+                    <select class="card-select" onchange="handleChange(this)">
+                        ${createCardOptions(data.cashBackCard || data.card)}
+                    </select>
+                </td>
+                <td class="cash-back-display">$0.00</td>
+                <td class="tracking-cell">
+                    <input type="text" class="tracking-input" placeholder="Tracking #" value="${data.incomingTracking || ''}" onchange="handleTrackingChange(this, 'incoming')">
+                    <button class="track-btn" onclick="trackPackage('${data.incomingTracking || ''}', 'incoming')">Track</button>
+                </td>
+                <td class="tracking-status status-cell">No Tracking</td>
+                <td><input type="date" class="date-input" value="${data.dateReceived || ''}" onchange="handleChange(this)"></td>
+                <td>
+                    <select onchange="handleChange(this)">
+                        <option value="No" ${data.resold === 'No' ? 'selected' : ''}>No</option>
+                        <option value="Yes" ${data.resold === 'Yes' ? 'selected' : ''}>Yes</option>
+                    </select>
+                </td>
+                <td><input type="text" class="currency-input" placeholder="$0.00" value="${data.salePrice ? formatCurrencyDisplay(data.salePrice) : ''}" onchange="handleChange(this)" oninput="handleCurrencyInput(this)"></td>
+                <td class="tracking-cell">
+                    <input type="text" class="tracking-input" placeholder="Tracking #" value="${data.outgoingTracking || ''}" onchange="handleTrackingChange(this, 'outgoing')">
+                    <button class="track-btn" onclick="trackPackage('${data.outgoingTracking || ''}', 'outgoing')">Track</button>
+                </td>
+                <td class="outgoing-status status-cell">Not Shipped</td>
+                <td><input type="date" class="date-input" value="${data.dateShipped || ''}" onchange="handleChange(this)"></td>
+                <td class="gross-profit-display">$0.00</td>
+                <td class="net-profit-display">$0.00</td>
+                <td><button class="delete-btn" onclick="removeRow(this)">Delete</button></td>
+            `;
+            
+            return row;
+        }
+
+        function addNewRow() {
+            const tbody = document.getElementById('dataBody');
+            const newRow = createRow();
+            tbody.appendChild(newRow);
+            calculateRow(newRow);
+            updateTotals();
+            saveDataToStorage();
+        }
+
+        function removeRow(button) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                button.closest('tr').remove();
+                updateTotals();
+                saveDataToStorage();
+            }
+        }
+
+        // Event handlers
+        function handleChange(element) {
+            calculateRow(element.closest('tr'));
+            updateTotals();
+            saveDataToStorage();
+        }
+
+        function handleCardChange(element) {
+            const row = element.closest('tr');
+            row.className = getCardClass(element.value);
+            calculateRow(row);
+            updateTotals();
+            saveDataToStorage();
+        }
+
+        function handleTrackingChange(element, type) {
+            const trackingNumber = element.value;
+            const trackBtn = element.nextElementSibling;
+            trackBtn.onclick = () => trackPackage(trackingNumber, type);
+            
+            if (type === 'incoming') {
+                updateTrackingStatus(element, trackingNumber);
+            } else {
+                updateOutgoingStatus(element, trackingNumber);
+            }
+            
+            saveDataToStorage();
+        }
+
+        // Calculation functions
+        function calculateRow(row) {
+            if (!row || !row.cells || row.cells.length < 16) return;
+            
+            try {
+                const purchaseAmount = getCurrencyValue(row.cells
