@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeLorean Vault Tracking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f2f2f7;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .dashboard {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+
+        .dashboard h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 18px 15px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .summary-card .icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .summary-card h3 {
+            margin-bottom: 8px;
+            font-size: 11px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .summary-card .value {
+            font-size: 20px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #8E8E93;
+        }
+
+        .btn-secondary:hover {
+            background: #6c757d;
+        }
+
+        .btn-success {
+            background: #34C759;
+        }
+
+        .btn-success:hover {
+            background: #28a745;
+        }
+
+        .btn-danger {
+            background: #FF3B30;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .btn-danger:hover {
+            background: #dc3545;
+        }
+
+        .entry-form {
+            background: white;
+            border: 2px solid #007AFF;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.1);
+        }
+
+        .entry-form h3 {
+            color: #007AFF;
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 120px 1fr 180px 120px 200px 100px 120px;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input, .form-select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 13px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .outgoing-section {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .outgoing-section.visible {
+            opacity: 1;
+        }
+
+        .outgoing-grid {
+            display: grid;
+            grid-template-columns: 200px 120px 120px;
+            gap: 10px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+
+        .entries-list {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .entries-header {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .entries-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .entries-table th {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .entries-table td {
+            padding: 10px 12px;
+            font-size: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .entries-table .entry-main {
+            border-bottom: none;
+        }
+
+        .entries-table .entry-detail {
+            border-bottom: 3px solid #dee2e6;
+        }
+
+        .entries-table .entry-detail td {
+            padding: 8px 12px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .entries-table .entry-group-odd .entry-main,
+        .entries-table .entry-group-odd .entry-detail {
+            background: #ffffff;
+        }
+
+        .entries-table .entry-group-even .entry-main,
+        .entries-table .entry-group-even .entry-detail {
+            background: #f8f9fa;
+        }
+
+        .entries-table .entry-group-odd:hover .entry-main,
+        .entries-table .entry-group-odd:hover + tr .entry-detail {
+            background: #e3f2fd;
+        }
+
+        .entries-table .entry-group-even:hover .entry-main,
+        .entries-table .entry-group-even:hover + tr .entry-detail {
+            background: #e8f5e8;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+
+        .btn-save {
+            background: #28a745;
+        }
+
+        .btn-save:hover {
+            background: #218838;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .edit-input {
+            padding: 2px 4px;
+            border: 1px solid #007AFF;
+            border-radius: 3px;
+            font-size: 11px;
+            width: 100%;
+            background: #fff;
+        }
+
+        .edit-select {
+            padding: 2px 4px;
+            border: 1px solid #007AFF;
+            border-radius: 3px;
+            font-size: 11px;
+            width: 100%;
+            background: #fff;
+        }
+
+        .col-date { width: 100px; }
+        .col-item { width: 200px; }
+        .col-card { width: 150px; }
+        .col-amount { width: 100px; text-align: right; }
+        .col-resold { width: 80px; text-align: center; }
+        .col-metrics { width: 120px; text-align: right; }
+        .col-action { width: 80px; text-align: center; }
+
+        .tracking-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .tracking-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .tracking-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: #999;
+            font-weight: 600;
+        }
+
+        .tracking-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .status-none {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-shipped {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-delivered {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .status-none .status-dot { background: #6c757d; }
+        .status-pending .status-dot { background: #ffc107; }
+        .status-shipped .status-dot { background: #17a2b8; }
+        .status-delivered .status-dot { background: #28a745; }
+
+        .profit-positive { color: #28a745; font-weight: 600; }
+        .profit-negative { color: #dc3545; font-weight: 600; }
+        .profit-zero { color: #6c757d; font-weight: 600; }
+
+        .tracking-link {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 11px;
+            color: #007AFF;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .tracking-link:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .card-list {
+            margin: 20px 0;
+        }
+
+        .card-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .gmail-review-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: white;
+            overflow: hidden;
+        }
+
+        .gmail-review-header {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .gmail-review-content {
+            padding: 15px;
+        }
+
+        .gmail-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .confidence-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .confidence-high {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .confidence-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .confidence-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .gmail-status {
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .status-loading {
+            background: #cce7ff;
+            color: #0066cc;
+            border: 1px solid #99d6ff;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 1200px) {
+            .form-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+            
+            .outgoing-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .outgoing-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .summary-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+
+            .entries-table {
+                font-size: 12px;
+            }
+
+            .entries-table th,
+            .entries-table td {
+                padding: 8px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="dashboard">
+            <h2>🚗 DaLorean Vault Tracking App</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="icon">💰</div>
+                    <h3>Total Purchases</h3>
+                    <div class="value" id="totalPurchases">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <div class="icon">💳</div>
+                    <h3>Total Cash Back</h3>
+                    <div class="value" id="totalCashBack">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <div class="icon">💵</div>
+                    <h3>Total Revenue</h3>
+                    <div class="value" id="totalRevenue">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <div class="icon">📈</div>
+                    <h3>Net Profit</h3>
+                    <div class="value" id="netProfit">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <div class="icon">📦</div>
+                    <h3>Incoming Packages</h3>
+                    <div class="value" id="incomingPackages">0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="icon">🚚</div>
+                    <h3>Outgoing Packages</h3>
+                    <div class="value" id="outgoingPackages">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-secondary" onclick="openCardModal()">Manage Credit Cards</button>
+            <button class="btn" onclick="testGmailConnection()" id="gmailTestBtn">Test Gmail Setup</button>
+            <button class="btn" onclick="initGmailAuth()" id="gmailAuthBtn">Loading...</button>
+            <button class="btn" onclick="scanEmails()" id="gmailScanBtn" style="display: none;">Scan for Purchases</button>
+            <button class="btn btn-success" onclick="exportCSV()">Export CSV</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('csvFile').click()">Import CSV</button>
+            <input type="file" id="csvFile" accept=".csv" class="hidden" onchange="importCSV(event)">
+        </div>
+
+        <!-- Entry Form -->
+        <div class="entry-form">
+            <h3>➕ Add New Purchase</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="entryDate" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Item</label>
+                    <input type="text" id="entryItem" class="form-input" placeholder="Item description">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Credit Card</label>
+                    <select id="entryCard" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount</label>
+                    <input type="number" id="entryAmount" class="form-input" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Incoming Tracking</label>
+                    <input type="text" id="entryIncomingTracking" class="form-input" placeholder="Tracking #">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Resold</label>
+                    <select id="entryResold" class="form-select" onchange="toggleOutgoingSection()">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sale Price</label>
+                    <input type="number" id="entrySalePrice" class="form-input" placeholder="0.00" step="0.01" disabled>
+                </div>
+            </div>
+            
+            <div class="outgoing-section" id="outgoingSection">
+                <div class="outgoing-grid">
+                    <div class="form-group">
+                        <label class="form-label">Outgoing Tracking</label>
+                        <input type="text" id="entryOutgoingTracking" class="form-input" placeholder="Tracking #">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Outgoing Ship Date</label>
+                        <input type="date" id="entryOutgoingDate" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+                <button class="btn" onclick="addEntry()">Add Entry</button>
+            </div>
+        </div>
+
+        <!-- Entries List -->
+        <div class="entries-list">
+            <div class="entries-header">
+                <span>Purchase History</span>
+                <span id="entriesCount">0 entries</span>
+            </div>
+            <div id="entriesContainer">
+                <div class="empty-state">
+                    <div class="icon">📦</div>
+                    <h3>No purchases yet</h3>
+                    <p>Add your first purchase above to get started!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gmail Review Modal -->
+    <div id="gmailModal" class="modal">
+        <div class="modal-content" style="width: 95%; max-width: 1000px; max-height: 80vh; overflow-y: auto;">
+            <h2>📧 Gmail Purchase Scanner</h2>
+            <div id="gmailStatus" style="margin: 15px 0; padding: 10px; border-radius: 5px; display: none;"></div>
+            <div id="detectedPurchases"></div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+                <button class="btn" onclick="importSelectedPurchases()" id="importBtn" style="display: none;">Import Selected</button>
+                <button class="btn btn-secondary" onclick="closeGmailModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credit Card Modal -->
+    <div id="cardModal" class="modal">
+        <div class="modal-content">
+            <h2>Manage Credit Cards</h2>
+            <div class="card-list" id="cardList"></div>
+            <h3>Add New Credit Card</h3>
+            <div class="form-group">
+                <label class="form-label">Card Name:</label>
+                <input type="text" id="newCardName" class="form-input" placeholder="e.g., Capital One Venture">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cash Back Rate (%):</label>
+                <input type="number" id="newCardRate" class="form-input" step="0.01" placeholder="e.g., 2.5">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn" onclick="addNewCard()">Add Card</button>
+                <button class="btn btn-secondary" onclick="closeCardModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Google APIs with better error handling -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="onGoogleAPILoaded()" onerror="onGoogleAPIError()"></script>
+
+    <script>
+        // Global state - keep it simple
+        var cards = {
+            'Chase Reserve': 0.01,
+            'Wells Fargo': 0.02,
+            'Farmers Credit Union': 0.025
+        };
+
+        var entries = [];
+        var entryCounter = 0;
+
+        // Sample data
+        var sampleData = [
+            {
+                date: '2024-01-15',
+                item: 'iPhone 15 Pro',
+                card: 'Chase Reserve',
+                amount: 999.00,
+                incomingTracking: '1Z999AA1234567890',
+                resold: true,
+                salePrice: 1150.00,
+                outgoingTracking: '1Z999BB9876543210',
+                outgoingDate: '2024-01-25'
+            },
+            {
+                date: '2024-01-20',
+                item: 'Nike Air Jordan Retro',
+                card: 'Wells Fargo',
+                amount: 180.00,
+                incomingTracking: '1Z888CC1122334455',
+                resold: true,
+                salePrice: 220.00,
+                outgoingTracking: '',
+                outgoingDate: ''
+            },
+            {
+                date: '2024-02-15',
+                item: 'Apple Watch Series 9',
+                card: 'Wells Fargo',
+                amount: 429.00,
+                incomingTracking: '',
+                resold: false,
+                salePrice: 0,
+                outgoingTracking: '',
+                outgoingDate: ''
+            }
+        ];
+
+        // Basic utility functions
+        function formatCurrency(amount) {
+            return '$' + amount.toFixed(2);
+        }
+
+        function getTrackingStatus(trackingNumber) {
+            if (!trackingNumber || trackingNumber.trim() === '') {
+                return 'none';
+            }
+            
+            var hash = 0;
+            for (var i = 0; i < trackingNumber.length; i++) {
+                hash = ((hash << 5) - hash) + trackingNumber.charCodeAt(i);
+                hash = hash & hash;
+            }
+            
+            var mod = Math.abs(hash) % 100;
+            if (mod < 30) return 'pending';
+            if (mod < 70) return 'shipped';
+            return 'delivered';
+        }
+
+        function createStatusIndicator(status) {
+            var statusTexts = {
+                'none': 'None',
+                'pending': 'Pending',
+                'shipped': 'In Transit',
+                'delivered': 'Delivered'
+            };
+            
+            return '<div class="status-indicator status-' + status + '"><div class="status-dot"></div>' + statusTexts[status] + '</div>';
+        }
+
+        function calculateMetrics(entry) {
+            var amount = parseFloat(entry.amount) || 0;
+            var salePrice = parseFloat(entry.salePrice) || 0;
+            var cashBackRate = cards[entry.card] || 0;
+            var cashBack = amount * cashBackRate;
+            var profit = salePrice - amount + cashBack;
+            
+            return { cashBack: cashBack, profit: profit };
+        }
+
+        // Form functions
+        function populateCardSelect() {
+            var select = document.getElementById('entryCard');
+            var options = '';
+            for (var cardName in cards) {
+                var rate = cards[cardName];
+                var percentage = (rate * 100).toFixed(1);
+                options += '<option value="' + cardName + '">' + cardName + ' (' + percentage + '%)</option>';
+            }
+            select.innerHTML = options;
+        }
+
+        function toggleOutgoingSection() {
+            var resold = document.getElementById('entryResold').value === 'true';
+            var outgoingSection = document.getElementById('outgoingSection');
+            var salePriceInput = document.getElementById('entrySalePrice');
+            
+            if (resold) {
+                outgoingSection.classList.add('visible');
+                salePriceInput.disabled = false;
+            } else {
+                outgoingSection.classList.remove('visible');
+                salePriceInput.disabled = true;
+                salePriceInput.value = '';
+                document.getElementById('entryOutgoingTracking').value = '';
+                document.getElementById('entryOutgoingDate').value = '';
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('entryDate').value = '';
+            document.getElementById('entryItem').value = '';
+            document.getElementById('entryAmount').value = '';
+            document.getElementById('entryIncomingTracking').value = '';
+            document.getElementById('entryResold').value = 'false';
+            document.getElementById('entrySalePrice').value = '';
+            document.getElementById('entryOutgoingTracking').value = '';
+            document.getElementById('entryOutgoingDate').value = '';
+            
+            var cardSelect = document.getElementById('entryCard');
+            if (cardSelect.options.length > 0) {
+                cardSelect.selectedIndex = 0;
+            }
+            
+            toggleOutgoingSection();
+        }
+
+        function addEntry() {
+            var date = document.getElementById('entryDate').value;
+            var item = document.getElementById('entryItem').value.trim();
+            var card = document.getElementById('entryCard').value;
+            var amount = parseFloat(document.getElementById('entryAmount').value) || 0;
+            var incomingTracking = document.getElementById('entryIncomingTracking').value.trim();
+            var resold = document.getElementById('entryResold').value === 'true';
+            var salePrice = parseFloat(document.getElementById('entrySalePrice').value) || 0;
+            var outgoingTracking = document.getElementById('entryOutgoingTracking').value.trim();
+            var outgoingDate = document.getElementById('entryOutgoingDate').value;
+
+            if (!item) {
+                alert('Please enter an item name.');
+                document.getElementById('entryItem').focus();
+                return;
+            }
+
+            if (amount <= 0) {
+                alert('Please enter a valid purchase amount.');
+                document.getElementById('entryAmount').focus();
+                return;
+            }
+
+            var entry = {
+                id: ++entryCounter,
+                date: date,
+                item: item,
+                card: card,
+                amount: amount,
+                incomingTracking: incomingTracking,
+                resold: resold,
+                salePrice: resold ? salePrice : 0,
+                outgoingTracking: resold ? outgoingTracking : '',
+                outgoingDate: resold ? outgoingDate : ''
+            };
+
+            entries.unshift(entry);
+            
+            clearForm();
+            renderEntries();
+            updateDashboard();
+        }
+
+        function createEntry(data) {
+            var entry = {
+                id: ++entryCounter,
+                date: data.date || '',
+                item: data.item || '',
+                card: data.card || Object.keys(cards)[0],
+                amount: data.amount || 0,
+                incomingTracking: data.incomingTracking || '',
+                resold: data.resold || false,
+                salePrice: data.salePrice || 0,
+                outgoingTracking: data.outgoingTracking || '',
+                outgoingDate: data.outgoingDate || ''
+            };
+            
+            entries.unshift(entry);
+            return entry;
+        }
+
+        function deleteEntry(entryId) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                entries = entries.filter(function(entry) {
+                    return entry.id !== entryId;
+                });
+                renderEntries();
+                updateDashboard();
+            }
+        }
+
+        function renderEntries() {
+            var container = document.getElementById('entriesContainer');
+            var count = document.getElementById('entriesCount');
+            
+            count.textContent = entries.length + ' entries';
+
+            if (entries.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📦</div><h3>No purchases yet</h3><p>Add your first purchase above to get started!</p></div>';
+                return;
+            }
+
+            var tableHTML = '<table class="entries-table"><thead><tr><th class="col-date">Date</th><th class="col-item">Item</th><th class="col-card">Credit Card</th><th class="col-amount">Amount</th><th class="col-resold">Resold</th><th class="col-metrics">Cash Back / Profit</th><th class="col-action">Action</th></tr></thead><tbody>';
+
+            for (var i = 0; i < entries.length; i++) {
+                var entry = entries[i];
+                var metrics = calculateMetrics(entry);
+                var profitClass = metrics.profit > 0 ? 'profit-positive' : metrics.profit < 0 ? 'profit-negative' : 'profit-zero';
+                var incomingStatus = getTrackingStatus(entry.incomingTracking);
+                var outgoingStatus = getTrackingStatus(entry.outgoingTracking);
+                var groupClass = i % 2 === 0 ? 'entry-group-even' : 'entry-group-odd';
+                
+                tableHTML += '<tr class="entry-main ' + groupClass + '" data-entry-id="' + entry.id + '">';
+                tableHTML += '<td class="col-date">' + entry.date + '</td>';
+                tableHTML += '<td class="col-item">' + entry.item + '</td>';
+                tableHTML += '<td class="col-card">' + entry.card + '</td>';
+                tableHTML += '<td class="col-amount">' + formatCurrency(entry.amount) + '</td>';
+                tableHTML += '<td class="col-resold">' + (entry.resold ? 'Yes - ' + formatCurrency(entry.salePrice) : 'No') + '</td>';
+                tableHTML += '<td class="col-metrics"><div class="profit-positive">' + formatCurrency(metrics.cashBack) + '</div><div class="' + profitClass + '">' + formatCurrency(metrics.profit) + '</div></td>';
+                tableHTML += '<td class="col-action"><div class="entry-actions"><button class="btn btn-danger btn-small" onclick="deleteEntry(' + entry.id + ')">Delete</button></div></td>';
+                tableHTML += '</tr>';
+                
+                tableHTML += '<tr class="entry-detail ' + groupClass + '" data-entry-id="' + entry.id + '">';
+                tableHTML += '<td colspan="7"><div class="tracking-section">';
+                tableHTML += '<div class="tracking-item"><div class="tracking-label">Incoming Package</div>';
+                tableHTML += '<div class="tracking-content">';
+                if (entry.incomingTracking) {
+                    tableHTML += '<a class="tracking-link" onclick="trackPackage(\'' + entry.incomingTracking + '\')">' + entry.incomingTracking + '</a>';
+                } else {
+                    tableHTML += '<span style="color: #999;">No tracking</span>';
+                }
+                tableHTML += createStatusIndicator(incomingStatus);
+                tableHTML += '</div></div>';
+                
+                if (entry.resold) {
+                    tableHTML += '<div class="tracking-item"><div class="tracking-label">Outgoing Package</div>';
+                    tableHTML += '<div class="tracking-content">';
+                    if (entry.outgoingTracking) {
+                        tableHTML += '<a class="tracking-link" onclick="trackPackage(\'' + entry.outgoingTracking + '\')">' + entry.outgoingTracking + '</a>';
+                    } else {
+                        tableHTML += '<span style="color: #999;">No tracking</span>';
+                    }
+                    tableHTML += createStatusIndicator(outgoingStatus);
+                    tableHTML += '</div></div>';
+                    
+                    tableHTML += '<div class="tracking-item"><div class="tracking-label">Outgoing Ship Date</div>';
+                    tableHTML += '<div class="tracking-content">' + (entry.outgoingDate || '<span style="color: #999;">Not set</span>') + '</div></div>';
+                }
+                
+                tableHTML += '</div></td></tr>';
+            }
+
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+
+        function updateDashboard() {
+            var totalPurchases = 0;
+            var totalCashBack = 0;
+            var totalRevenue = 0;
+            var incomingPackages = 0;
+            var outgoingPackages = 0;
+
+            for (var i = 0; i < entries.length; i++) {
+                var entry = entries[i];
+                var amount = parseFloat(entry.amount) || 0;
+                var salePrice = parseFloat(entry.salePrice) || 0;
+                var metrics = calculateMetrics(entry);
+
+                totalPurchases += amount;
+                totalCashBack += metrics.cashBack;
+                totalRevenue += salePrice;
+
+                var incomingStatus = getTrackingStatus(entry.incomingTracking);
+                var outgoingStatus = getTrackingStatus(entry.outgoingTracking);
+
+                if (entry.incomingTracking && incomingStatus !== 'delivered') {
+                    incomingPackages++;
+                }
+                if (entry.outgoingTracking && entry.resold && outgoingStatus !== 'delivered') {
+                    outgoingPackages++;
+                }
+            }
+
+            var netProfit = totalRevenue - totalPurchases + totalCashBack;
+
+            document.getElementById('totalPurchases').textContent = formatCurrency(totalPurchases);
+            document.getElementById('totalCashBack').textContent = formatCurrency(totalCashBack);
+            document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+            document.getElementById('netProfit').textContent = formatCurrency(netProfit);
+            document.getElementById('incomingPackages').textContent = incomingPackages;
+            document.getElementById('outgoingPackages').textContent = outgoingPackages;
+        }
+
+        function trackPackage(trackingNumber) {
+            if (trackingNumber && trackingNumber.trim()) {
+                window.open('https://www.google.com/search?q=' + encodeURIComponent(trackingNumber + ' tracking'), '_blank');
+            } else {
+                alert('No tracking number available');
+            }
+        }
+
+        // Credit card management
+        function openCardModal() {
+            document.getElementById('cardModal').style.display = 'block';
+            renderCardList();
+        }
+
+        function closeCardModal() {
+            document.getElementById('cardModal').style.display = 'none';
+        }
+
+        function renderCardList() {
+            var cardList = document.getElementById('cardList');
+            var html = '';
+            for (var cardName in cards) {
+                var rate = cards[cardName];
+                html += '<div class="card-item">';
+                html += '<span>' + cardName + ' - ' + (rate * 100).toFixed(1) + '%</span>';
+                html += '<button class="btn btn-danger" onclick="deleteCard(\'' + cardName + '\')">Delete</button>';
+                html += '</div>';
+            }
+            cardList.innerHTML = html;
+        }
+
+        function addNewCard() {
+            var name = document.getElementById('newCardName').value.trim();
+            var rate = parseFloat(document.getElementById('newCardRate').value);
+
+            if (!name || isNaN(rate) || rate < 0) {
+                alert('Please enter a valid card name and rate.');
+                return;
+            }
+
+            cards[name] = rate / 100;
+            renderCardList();
+            populateCardSelect();
+
+            document.getElementById('newCardName').value = '';
+            document.getElementById('newCardRate').value = '';
+        }
+
+        function deleteCard(cardName) {
+            if (Object.keys(cards).length <= 1) {
+                alert('You must have at least one credit card.');
+                return;
+            }
+
+            if (confirm('Delete ' + cardName + '?')) {
+                delete cards[cardName];
+                
+                for (var i = 0; i < entries.length; i++) {
+                    if (entries[i].card === cardName) {
+                        entries[i].card = Object.keys(cards)[0];
+                    }
+                }
+                
+                renderCardList();
+                populateCardSelect();
+                renderEntries();
+                updateDashboard();
+            }
+        }
+
+        // CSV functions
+        function exportCSV() {
+            var headers = ['Date', 'Item', 'Card', 'Purchase Amount', 'Incoming Tracking', 'Resold', 'Sale Price', 'Outgoing Tracking', 'Ship Date', 'Cash Back', 'Profit'];
+            var csvRows = [headers.join(',')];
+
+            for (var i = 0; i < entries.length; i++) {
+                var entry = entries[i];
+                var metrics = calculateMetrics(entry);
+                var row = [
+                    entry.date,
+                    '"' + entry.item.replace(/"/g, '""') + '"',
+                    entry.card,
+                    entry.amount,
+                    entry.incomingTracking,
+                    entry.resold ? 'Yes' : 'No',
+                    entry.salePrice,
+                    entry.outgoingTracking,
+                    entry.outgoingDate,
+                    metrics.cashBack.toFixed(2),
+                    metrics.profit.toFixed(2)
+                ];
+                csvRows.push(row.join(','));
+            }
+
+            var csvContent = csvRows.join('\n');
+            var blob = new Blob([csvContent], { type: 'text/csv' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'purchase_tracker_' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importCSV(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var csvContent = e.target.result;
+                    var lines = csvContent.split('\n');
+                    
+                    entries = [];
+                    entryCounter = 0;
+
+                    for (var i = 1; i < lines.length; i++) {
+                        var line = lines[i].trim();
+                        if (!line) continue;
+
+                        var values = parseCSVLine(line);
+                        if (values.length < 4) continue;
+
+                        var data = {
+                            date: values[0] || '',
+                            item: values[1] || '',
+                            card: values[2] || Object.keys(cards)[0],
+                            amount: parseFloat(values[3]) || 0,
+                            incomingTracking: values[4] || '',
+                            resold: values[5] === 'Yes',
+                            salePrice: parseFloat(values[6]) || 0,
+                            outgoingTracking: values[7] || '',
+                            outgoingDate: values[8] || ''
+                        };
+
+                        if (!cards[data.card]) {
+                            data.card = Object.keys(cards)[0];
+                        }
+
+                        createEntry(data);
+                    }
+
+                    renderEntries();
+                    updateDashboard();
+                    alert('CSV imported successfully!');
+
+                } catch (error) {
+                    alert('Error importing CSV: ' + error.message);
+                }
+            };
+
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function parseCSVLine(line) {
+            var values = [];
+            var current = '';
+            var inQuotes = false;
+
+            for (var i = 0; i < line.length; i++) {
+                var char = line[i];
+
+                if (char === '"') {
+                    if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    values.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+
+            values.push(current.trim());
+            return values;
+        }
+
+        // Event listeners
+        document.addEventListener('click', function(event) {
+            if (event.target.id === 'cardModal') {
+                closeCardModal();
+            }
+        });
+
+        // Initialize app
+        function initializeApp() {
+            populateCardSelect();
+            
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementById('entryDate').value = today;
+            
+            for (var i = 0; i < sampleData.length; i++) {
+                createEntry(sampleData[i]);
+            }
+            
+            renderEntries();
+            updateDashboard();
+            
+            // Initialize Gmail button state
+            setTimeout(function() {
+                updateGmailButton();
+            }, 1000);
+        }
+
+        // Start the app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+    </script>
+</body>
+</html>
