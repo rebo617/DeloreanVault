@@ -22,6 +22,7 @@ export default async function handler(req, res) {
         'fedex': 5,
         'usps': 70,
         'dhl': 9,
+        'amazon': 169,
         'auto': 0  // Auto-detect
     };
     
@@ -35,58 +36,127 @@ export default async function handler(req, res) {
             carrierCode
         });
         
-        const response = await fetch('https://api.17track.net/track/v1/query', {
+        // First, register the tracking number
+        const registerResponse = await fetch('https://api.17track.net/track/v2.2/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 '17token': process.env.TRACK17_API_KEY
             },
-            body: JSON.stringify({
+            body: JSON.stringify([{
                 number: trackingNumber,
                 carrier: carrierCode
-            })
+            }])
         });
         
-        const data = await response.json();
+        const registerData = await registerResponse.json();
+        console.log('Register response:', JSON.stringify(registerData, null, 2));
+        
+        // Then query for tracking info
+        const queryResponse = await fetch('https://api.17track.net/track/v2.2/gettrackinfo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                '17token': process.env.TRACK17_API_KEY
+            },
+            body: JSON.stringify([{
+                number: trackingNumber,
+                carrier: carrierCode
+            }])
+        });
+        
+        const queryData = await queryResponse.json();
         
         // Debug: Log the raw response
-        console.log('17Track response:', JSON.stringify(data, null, 2));
+        console.log('17Track query response:', JSON.stringify(queryData, null, 2));
         
-        if (data.code === 0 && data.data?.accepted?.length > 0) {
-            const trackInfo = data.data.accepted[0].track;
-            const status = trackInfo?.status || 'unknown';
+        if (queryData.code === 0 && queryData.data?.accepted?.length > 0) {
+            const trackInfo = queryData.data.accepted[0];
+            const track = trackInfo.track;
+            
+            if (!track) {
+                return res.json({ 
+                    status: 'unknown', 
+                    error: 'No tracking information available yet',
+                    trackingNumber: trackingNumber,
+                    registered: true
+                });
+            }
             
             // Map 17track statuses to our app's statuses
             let mappedStatus = 'unknown';
-            switch (status) {
-                case 'transit':
-                case 'pickup':
+            let statusText = 'Unknown';
+            
+            // Check the latest event status
+            const latestEvent = track.z0?.[0]; // Most recent tracking event
+            const generalStatus = track.e; // General status code
+            
+            // Status mapping based on 17track documentation
+            switch (generalStatus) {
+                case 10: // Information received
+                case 20: // In transit
+                case 30: // Out for delivery
                     mappedStatus = 'shipped';
+                    statusText = 'In Transit';
                     break;
-                case 'delivered':
+                case 40: // Delivered
                     mappedStatus = 'delivered';
+                    statusText = 'Delivered';
                     break;
-                case 'undelivered':
-                case 'exception':
+                case 50: // Exception/Problem
                     mappedStatus = 'pending';
+                    statusText = 'Exception';
                     break;
                 default:
-                    mappedStatus = 'unknown';
+                    mappedStatus = 'pending';
+                    statusText = 'Pending';
+            }
+            
+            // If we have tracking events, use the latest one for more detail
+            if (latestEvent) {
+                const eventStatus = latestEvent.z;
+                switch (eventStatus) {
+                    case 'Delivered':
+                    case 'delivered':
+                        mappedStatus = 'delivered';
+                        statusText = 'Delivered';
+                        break;
+                    case 'Out for delivery':
+                    case 'In transit':
+                        mappedStatus = 'shipped';
+                        statusText = 'In Transit';
+                        break;
+                }
             }
             
             res.json({ 
                 status: mappedStatus,
-                rawStatus: status,
-                carrier: trackInfo?.service || 'unknown',
+                statusText: statusText,
+                rawStatus: generalStatus,
+                carrier: track.w || 'Unknown',
                 carrierCode: carrierCode,
-                debug: data  // Include full response for debugging
+                lastUpdate: latestEvent?.a || null,
+                location: latestEvent?.c || null,
+                events: track.z0 || [],
+                debug: {
+                    generalStatus: generalStatus,
+                    latestEvent: latestEvent,
+                    fullTrack: track
+                }
+            });
+        } else if (queryData.code === 0 && queryData.data?.rejected?.length > 0) {
+            const rejection = queryData.data.rejected[0];
+            res.json({ 
+                status: 'unknown', 
+                error: `Tracking rejected: ${rejection.error?.message || 'Invalid tracking number'}`,
+                trackingNumber: trackingNumber
             });
         } else {
             // Return detailed error info
             res.json({ 
                 status: 'unknown', 
-                error: 'No tracking data found',
-                apiResponse: data,
+                error: 'No tracking data found or API error',
+                apiResponse: queryData,
                 carrierCode: carrierCode,
                 trackingNumber: trackingNumber
             });
