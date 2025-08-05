@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-    // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,27 +8,24 @@ export default async function handler(req, res) {
         return;
     }
     
-    const { trackingNumber, carrier } = req.query;
+    const { trackingNumber } = req.query;
     
     if (!trackingNumber) {
         return res.json({ status: 'unknown', error: 'No tracking number provided' });
     }
     
-    // Map carrier names to 17track carrier codes
-    const carrierCodes = {
-        'ups': 16,
-        'fedex': 5,
-        'usps': 70,
-        'dhl': 9,
-        'amazon': 169,
-        'auto': 0
-    };
-    
-    const carrierCode = carrierCodes[carrier?.toLowerCase()] || 0;
-    
     try {
-        // First, register the tracking number
-        const registerResponse = await fetch('https://api.17track.net/track/v2.2/register', {
+        // Test if environment variable exists
+        if (!process.env.TRACK17_API_KEY) {
+            return res.json({ 
+                status: 'unknown', 
+                error: 'API key not configured',
+                trackingNumber: trackingNumber
+            });
+        }
+        
+        // Just test the register endpoint
+        const response = await fetch('https://api.17track.net/track/v2.2/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -37,26 +33,25 @@ export default async function handler(req, res) {
             },
             body: JSON.stringify([{
                 number: trackingNumber,
-                carrier: carrierCode
+                carrier: 0
             }])
         });
         
-        const registerData = await registerResponse.json();
+        const data = await response.json();
         
-        // Then query for tracking info
-        const queryResponse = await fetch('https://api.17track.net/track/v2.2/gettrackinfo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                '17token': process.env.TRACK17_API_KEY
-            },
-            body: JSON.stringify([{
-                number: trackingNumber,
-                carrier: carrierCode
-            }])
+        return res.json({ 
+            status: 'unknown', 
+            error: 'Test completed - check response',
+            trackingNumber: trackingNumber,
+            apiResponse: data,
+            responseStatus: response.status
         });
         
-        const queryData = await queryResponse.json();
-        
-        if (queryData.code === 0 && queryData.data?.accepted?.length > 0) {
-            const trackInfo = queryData.data.accepted[0];
+    } catch (error) {
+        return res.json({ 
+            status: 'unknown', 
+            error: `Caught error: ${error.message}`,
+            trackingNumber: trackingNumber
+        });
+    }
+}
