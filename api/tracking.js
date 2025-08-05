@@ -8,24 +8,26 @@ export default async function handler(req, res) {
         return;
     }
     
-    const { trackingNumber } = req.query;
+    const { trackingNumber, carrier } = req.query;
     
     if (!trackingNumber) {
         return res.json({ status: 'unknown', error: 'No tracking number provided' });
     }
     
+    const carrierCodes = {
+        'ups': 16,
+        'fedex': 5,
+        'usps': 70,
+        'dhl': 9,
+        'amazon': 169,
+        'auto': 0
+    };
+    
+    const carrierCode = carrierCodes[carrier?.toLowerCase()] || 0;
+    
     try {
-        // Test if environment variable exists
-        if (!process.env.TRACK17_API_KEY) {
-            return res.json({ 
-                status: 'unknown', 
-                error: 'API key not configured',
-                trackingNumber: trackingNumber
-            });
-        }
-        
-        // Just test the register endpoint
-        const response = await fetch('https://api.17track.net/track/v2.2/register', {
+        // Register the tracking number
+        const registerResponse = await fetch('https://api.17track.net/track/v2.2/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -33,24 +35,89 @@ export default async function handler(req, res) {
             },
             body: JSON.stringify([{
                 number: trackingNumber,
-                carrier: 0
+                carrier: carrierCode
             }])
         });
         
-        const data = await response.json();
+        if (!registerResponse.ok) {
+            throw new Error(`Register failed: ${registerResponse.status}`);
+        }
         
-        return res.json({ 
-            status: 'unknown', 
-            error: 'Test completed - check response',
-            trackingNumber: trackingNumber,
-            apiResponse: data,
-            responseStatus: response.status
+        // Get tracking info
+        const queryResponse = await fetch('https://api.17track.net/track/v2.2/gettrackinfo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                '17token': process.env.TRACK17_API_KEY
+            },
+            body: JSON.stringify([{
+                number: trackingNumber,
+                carrier: carrierCode
+            }])
         });
+        
+        if (!queryResponse.ok) {
+            throw new Error(`Query failed: ${queryResponse.status}`);
+        }
+        
+        const queryData = await queryResponse.json();
+        
+        if (queryData.code === 0 && queryData.data?.accepted?.length > 0) {
+            const trackInfo = queryData.data.accepted[0];
+            const track = trackInfo.track;
+            
+            if (!track || !track.e) {
+                return res.json({ 
+                    status: 'pending', 
+                    statusText: 'Registered - awaiting updates',
+                    trackingNumber: trackingNumber
+                });
+            }
+            
+            let mappedStatus = 'pending';
+            let statusText = 'Pending';
+            
+            const generalStatus = track.e;
+            
+            switch (generalStatus) {
+                case 10:
+                case 20:
+                case 30:
+                    mappedStatus = 'shipped';
+                    statusText = 'In Transit';
+                    break;
+                case 40:
+                    mappedStatus = 'delivered';
+                    statusText = 'Delivered';
+                    break;
+                case 50:
+                    mappedStatus = 'pending';
+                    statusText = 'Exception';
+                    break;
+                default:
+                    mappedStatus = 'pending';
+                    statusText = 'Registered';
+            }
+            
+            return res.json({ 
+                status: mappedStatus,
+                statusText: statusText,
+                carrier: track.w || 'Auto-detected',
+                trackingNumber: trackingNumber
+            });
+        } else {
+            return res.json({ 
+                status: 'pending', 
+                statusText: 'Registered - no updates yet',
+                trackingNumber: trackingNumber
+            });
+        }
         
     } catch (error) {
         return res.json({ 
             status: 'unknown', 
-            error: `Caught error: ${error.message}`,
+            statusText: 'Connection error',
+            error: error.message,
             trackingNumber: trackingNumber
         });
     }
