@@ -1,8 +1,10 @@
 export default async function handler(req, res) {
+    // Set CORS headers FIRST, before any other logic
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
+    // Handle preflight requests
     if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
@@ -11,7 +13,7 @@ export default async function handler(req, res) {
     const { trackingNumber, carrier } = req.query;
     
     if (!trackingNumber) {
-        return res.json({ status: 'unknown', error: 'No tracking number provided' });
+        return res.status(200).json({ status: 'unknown', error: 'No tracking number provided' });
     }
     
     const carrierCodes = {
@@ -40,7 +42,11 @@ export default async function handler(req, res) {
         });
         
         if (!registerResponse.ok) {
-            throw new Error(`Register failed: ${registerResponse.status}`);
+            return res.status(200).json({
+                status: 'unknown',
+                statusText: 'Registration failed',
+                trackingNumber: trackingNumber
+            });
         }
         
         // Get tracking info
@@ -57,7 +63,11 @@ export default async function handler(req, res) {
         });
         
         if (!queryResponse.ok) {
-            throw new Error(`Query failed: ${queryResponse.status}`);
+            return res.status(200).json({
+                status: 'unknown',
+                statusText: 'Query failed',
+                trackingNumber: trackingNumber
+            });
         }
         
         const queryData = await queryResponse.json();
@@ -67,7 +77,7 @@ export default async function handler(req, res) {
             const track = trackInfo.track;
             
             if (!track || !track.e) {
-                return res.json({ 
+                return res.status(200).json({ 
                     status: 'pending', 
                     statusText: 'Registered - awaiting updates',
                     trackingNumber: trackingNumber
@@ -99,14 +109,14 @@ export default async function handler(req, res) {
                     statusText = 'Registered';
             }
             
-            return res.json({ 
+            return res.status(200).json({ 
                 status: mappedStatus,
                 statusText: statusText,
                 carrier: track.w || 'Auto-detected',
                 trackingNumber: trackingNumber
             });
         } else {
-            return res.json({ 
+            return res.status(200).json({ 
                 status: 'pending', 
                 statusText: 'Registered - no updates yet',
                 trackingNumber: trackingNumber
@@ -114,7 +124,7 @@ export default async function handler(req, res) {
         }
         
     } catch (error) {
-        return res.json({ 
+        return res.status(200).json({ 
             status: 'unknown', 
             statusText: 'Connection error',
             error: error.message,
