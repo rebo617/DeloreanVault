@@ -10,13 +10,31 @@ export default async function handler(req, res) {
         return;
     }
     
-    const { trackingNumber } = req.query;
+    const { trackingNumber, carrier } = req.query;
     
     if (!trackingNumber) {
         return res.json({ status: 'unknown', error: 'No tracking number provided' });
     }
     
+    // Map carrier names to 17track carrier codes
+    const carrierCodes = {
+        'ups': 16,
+        'fedex': 5,
+        'usps': 70,
+        'dhl': 9,
+        'auto': 0  // Auto-detect
+    };
+    
+    const carrierCode = carrierCodes[carrier?.toLowerCase()] || 0; // Default to auto-detect
+    
     try {
+        // Debug: Log what we're sending
+        console.log('Tracking request:', {
+            trackingNumber,
+            carrier,
+            carrierCode
+        });
+        
         const response = await fetch('https://api.17track.net/track/v1/query', {
             method: 'POST',
             headers: {
@@ -25,11 +43,14 @@ export default async function handler(req, res) {
             },
             body: JSON.stringify({
                 number: trackingNumber,
-                carrier: 0  // Auto-detect carrier
+                carrier: carrierCode
             })
         });
         
         const data = await response.json();
+        
+        // Debug: Log the raw response
+        console.log('17Track response:', JSON.stringify(data, null, 2));
         
         if (data.code === 0 && data.data?.accepted?.length > 0) {
             const trackInfo = data.data.accepted[0].track;
@@ -56,14 +77,28 @@ export default async function handler(req, res) {
             res.json({ 
                 status: mappedStatus,
                 rawStatus: status,
-                carrier: trackInfo?.service || 'unknown'
+                carrier: trackInfo?.service || 'unknown',
+                carrierCode: carrierCode,
+                debug: data  // Include full response for debugging
             });
         } else {
-            res.json({ status: 'unknown', error: 'No tracking data found' });
+            // Return detailed error info
+            res.json({ 
+                status: 'unknown', 
+                error: 'No tracking data found',
+                apiResponse: data,
+                carrierCode: carrierCode,
+                trackingNumber: trackingNumber
+            });
         }
         
     } catch (error) {
         console.error('17Track API error:', error);
-        res.json({ status: 'unknown', error: error.message });
+        res.json({ 
+            status: 'unknown', 
+            error: error.message,
+            carrierCode: carrierCode,
+            trackingNumber: trackingNumber
+        });
     }
 }
