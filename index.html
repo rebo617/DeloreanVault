@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeLorean Vault Tracking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f2f2f7;
+            padding: 20px;
+            line-height: 1.4;
+        }
+
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-box h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+
+        .login-button {
+            width: 100%;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .app-content {
+            display: none;
+        }
+
+        .app {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .dashboard {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .dashboard h2 {
+            margin-bottom: 25px;
+            font-size: 26px;
+            text-align: center;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px 18px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-card .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .summary-card h3 {
+            margin-bottom: 10px;
+            font-size: 11px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .summary-card .value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 12px 10px 40px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 16px;
+        }
+
+        .btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #8E8E93;
+        }
+
+        .btn-success {
+            background: #34C759;
+        }
+
+        .btn-danger {
+            background: #FF3B30;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .entries-list {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .entries-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .entry-card {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s ease;
+        }
+
+        .entry-card:hover {
+            background: #f8f9fa;
+        }
+
+        .entry-card:last-child {
+            border-bottom: none;
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .entry-title {
+            flex: 1;
+        }
+
+        .entry-date-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 4px;
+        }
+
+        .item-name {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .edit-btn {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .financial-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007AFF;
+            margin-bottom: 12px;
+        }
+
+        .cost-info {
+            display: flex;
+            gap: 20px;
+        }
+
+        .cost-item {
+            text-align: center;
+        }
+
+        .cost-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .cost-value {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: monospace;
+            color: #212529;
+        }
+
+        .profit-info {
+            text-align: right;
+        }
+
+        .profit-amount {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: monospace;
+            margin-bottom: 2px;
+        }
+
+        .profit-positive { color: #28a745; }
+        .profit-zero { color: #6c757d; }
+        .profit-negative { color: #dc3545; }
+
+        .cashback-info {
+            font-size: 11px;
+            color: #17a2b8;
+            font-weight: 500;
+        }
+
+        .details-toggle {
+            background: #e9ecef;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #495057;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toggle-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .toggle-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .entry-details {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .entry-details.visible {
+            display: grid;
+        }
+
+        .detail-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            color: #212529;
+            font-weight: 600;
+        }
+
+        .card-chip {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .tracking-section {
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .tracking-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .tracking-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #17a2b8;
+            position: relative;
+        }
+
+        .tracking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .tracking-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+        }
+
+        .tracking-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-unknown { 
+            background: #6c757d; 
+            color: white;
+        }
+        .status-pending { 
+            background: #ffc107; 
+            color: #212529;
+        }
+        .status-shipped { 
+            background: #17a2b8; 
+            color: white;
+        }
+        .status-delivered { 
+            background: #28a745; 
+            color: white;
+        }
+        .status-loading {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .tracking-number {
+            font-family: monospace;
+            color: #007AFF;
+            font-weight: 500;
+            font-size: 12px;
+            cursor: pointer;
+            word-break: break-all;
+            margin-bottom: 4px;
+        }
+
+        .tracking-number:hover {
+            text-decoration: underline;
+        }
+
+        .tracking-date {
+            font-size: 10px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .tracking-item.incoming {
+            border-left-color: #17a2b8;
+        }
+
+        .tracking-item.outgoing {
+            border-left-color: #28a745;
+        }
+
+        .tracking-item.awaiting {
+            border-left-color: #ffc107;
+        }
+
+        .tracking-refresh {
+            background: none;
+            border: none;
+            color: #007AFF;
+            font-size: 10px;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .tracking-refresh:hover {
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .tracking-info {
+            font-size: 10px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .tracking-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .form-input, .form-select {
+            padding: 10px 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #007AFF;
+        }
+
+        .form-input:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .outgoing-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            opacity: 0.4;
+            transition: opacity 0.3s ease;
+        }
+
+        .outgoing-section.visible {
+            opacity: 1;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+
+        .sale-value {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <!-- Password Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h1>🚗 DeLorean Vault</h1>
+            <p style="color: #6c757d; margin-bottom: 30px;">Enter password to access your purchase tracking dashboard</p>
+            <input 
+                type="password" 
+                id="passwordField" 
+                class="password-input" 
+                placeholder="Enter password"
+                onkeyup="if(event.key==='Enter') handleLogin()"
+            >
+            <button class="login-button" onclick="handleLogin()">
+                🔓 Access Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- App Content -->
+    <div id="appContent" class="app-content">
+        <div class="app">
+            <div class="dashboard">
+                <h2>🚗 DeLorean Vault Tracking App</h2>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <span style="font-size: 12px; color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 12px;">
+                        📡 Live Tracking Enabled
+                    </span>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="icon">💰</div>
+                        <h3>Total Purchases</h3>
+                        <div class="value" id="totalPurchases">$0.00</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="icon">💳</div>
+                        <h3>Total Cash Back</h3>
+                        <div class="value" id="totalCashBack">$0.00</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="icon">💵</div>
+                        <h3>Total Revenue</h3>
+                        <div class="value" id="totalRevenue">$0.00</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="icon">📈</div>
+                        <h3>Net Profit</h3>
+                        <div class="value" id="netProfit">$0.00</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="icon">📦</div>
+                        <h3>Incoming Packages</h3>
+                        <div class="value" id="incomingPackages">0</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="icon">🚚</div>
+                        <h3>Outgoing Packages</h3>
+                        <div class="value" id="outgoingPackages">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="search-container">
+                    <div class="search-icon">🔍</div>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search entries..." oninput="filterEntries()">
+                </div>
+                <button class="btn" onclick="openEntryModal()">➕ Add Purchase</button>
+                <button class="btn btn-secondary" onclick="openCardModal()">💳 Manage Cards</button>
+                <button class="btn btn-success" onclick="exportCSV()">📊 Export CSV</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('csvFile').click()">📁 Import CSV</button>
+                <button class="btn btn-secondary" onclick="refreshAllTracking()">🔄 Refresh Tracking</button>
+                <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear Data</button>
+                <input type="file" id="csvFile" accept=".csv" class="hidden" onchange="importCSV(event)">
+            </div>
+
+            <div class="entries-list">
+                <div class="entries-header">
+                    <span>📋 Purchase History</span>
+                    <span id="entriesCount">0 entries</span>
+                </div>
+                <div id="entriesContainer">
+                    <div class="empty-state">
+                        <div class="icon">📦</div>
+                        <h3>No purchases yet</h3>
+                        <p>Add your first purchase above to get started!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entry Modal -->
+    <div id="entryModal" class="modal">
+        <div class="modal-content">
+            <h3 id="entryModalTitle">➕ Add New Purchase</h3>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="entryDate" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Item</label>
+                    <input type="text" id="entryItem" class="form-input" placeholder="Item description" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Purchase Card</label>
+                    <select id="entryCard" class="form-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount</label>
+                    <input type="number" id="entryAmount" class="form-input" placeholder="0.00" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Shipping Cost</label>
+                    <input type="number" id="entryShippingCost" class="form-input" placeholder="0.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Shipping Card</label>
+                    <select id="entryShippingCard" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Incoming Tracking</label>
+                    <input type="text" id="entryIncomingTracking" class="form-input" placeholder="Tracking #">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Resold</label>
+                    <select id="entryResold" class="form-select" onchange="toggleOutgoingSection()">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sale Price</label>
+                    <input type="number" id="entrySalePrice" class="form-input" placeholder="0.00" step="0.01" min="0" disabled>
+                </div>
+            </div>
+            
+            <div class="outgoing-section" id="outgoingSection">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Outgoing Tracking</label>
+                        <input type="text" id="entryOutgoingTracking" class="form-input" placeholder="Tracking #">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Outgoing Ship Date</label>
+                        <input type="date" id="entryOutgoingDate" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="closeEntryModal()">❌ Cancel</button>
+                <button class="btn btn-secondary" onclick="clearForm()">🗑️ Clear</button>
+                <button class="btn" id="submitBtn" onclick="addEntry()">✅ Add Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Modal -->
+    <div id="cardModal" class="modal">
+        <div class="modal-content">
+            <h3>💳 Manage Credit Cards</h3>
+            <div id="cardList"></div>
+            <div class="form-group">
+                <label class="form-label">Card Name:</label>
+                <input type="text" id="newCardName" class="form-input" placeholder="e.g., Capital One Venture">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cash Back Rate (%):</label>
+                <input type="number" id="newCardRate" class="form-input" step="0.01" min="0" max="100" placeholder="e.g., 2.5">
+            </div>
+            <div class="form-actions">
+                <button class="btn" onclick="addNewCard()">✅ Add Card</button>
+                <button class="btn btn-secondary" onclick="closeCardModal()">❌ Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Update this with your Vercel deployment URL
+        var TRACKING_API_URL = 'https://delorean-vault-1-git-main-andrew-mosts-projects.vercel.app/api/track';
+        
+        // Global variables
+        var cards = {
+            'Chase Reserve': 0.01,
+            'Wells Fargo': 0.02,
+            'Farmers Credit Union': 0.025
+        };
+
+        var allEntries = [];
+        var filteredEntries = [];
+        var entryCounter = 0;
+        var isEditMode = false;
+        var editingEntryId = null;
+        
+        // Cache for tracking data to avoid excessive API calls
+        var trackingCache = new Map();
+        var CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
+        var sampleData = [
+            {
+                date: '2024-12-15',
+                item: 'iPhone 15 Pro Max 256GB',
+                card: 'Chase Reserve',
+                amount: 1199.99,
+                shippingCost: 0,
+                shippingCard: 'Chase Reserve',
+                incomingTracking: '1Z999AA1234567890',
+                resold: true,
+                salePrice: 1350.00,
+                outgoingTracking: '1Z999BB9876543210',
+                outgoingDate: '2024-12-22'
+            },
+            {
+                date: '2024-12-10',
+                item: 'Nike Air Jordan 4 Retro Black Cat',
+                card: 'Wells Fargo',
+                amount: 210.00,
+                shippingCost: 12.50,
+                shippingCard: 'Wells Fargo',
+                incomingTracking: '1Z888CC1122334455',
+                resold: true,
+                salePrice: 285.00,
+                outgoingTracking: '1Z777DD5566778899',
+                outgoingDate: '2024-12-18'
+            },
+            {
+                date: '2024-12-05',
+                item: 'Apple Watch Series 10 GPS 42mm',
+                card: 'Farmers Credit Union',
+                amount: 399.99,
+                shippingCost: 8.99,
+                shippingCard: 'Farmers Credit Union',
+                incomingTracking: '1Z666EE9988776655',
+                resold: false,
+                salePrice: 0,
+                outgoingTracking: '',
+                outgoingDate: ''
+            }
+        ];
+
+        // Password function
+        function handleLogin() {
+            var passwordField = document.getElementById('passwordField');
+            var loginScreen = document.getElementById('loginScreen');
+            var appContent = document.getElementById('appContent');
+            
+            if (passwordField.value === '24Florence!') {
+                loginScreen.style.display = 'none';
+                appContent.style.display = 'block';
+                initApp();
+            } else {
+                alert('Incorrect password');
+                passwordField.value = '';
+                passwordField.focus();
+            }
+        }
+
+        // Utility functions
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            var date = new Date(dateString);
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var day = String(date.getDate()).padStart(2, '0');
+            var year = date.getFullYear();
+            return month + '-' + day + '-' + year;
+        }
+
+        function formatCurrency(amount) {
+            return '$' + Number(amount).toFixed(2);
+        }
+
+        function calculateMetrics(entry) {
+            var amount = parseFloat(entry.amount) || 0;
+            var shippingCost = parseFloat(entry.shippingCost) || 0;
+            var salePrice = parseFloat(entry.salePrice) || 0;
+            
+            var purchaseCashBackRate = cards[entry.card] || 0;
+            var purchaseCashBack = amount * purchaseCashBackRate;
+            
+            var shippingCashBackRate = shippingCost > 0 ? (cards[entry.shippingCard] || 0) : 0;
+            var shippingCashBack = shippingCost * shippingCashBackRate;
+            
+            var totalCashBack = purchaseCashBack + shippingCashBack;
+            var cashProfit = entry.resold ? (salePrice - amount) : 0;
+            var totalProfit = totalCashBack + cashProfit;
+            var totalCost = amount + shippingCost;
+            
+            return { 
+                cashBack: totalCashBack,
+                cashProfit: cashProfit,
+                profit: totalProfit,
+                totalCost: totalCost
+            };
+        }
+
+        // Real tracking API functions
+        function getTrackingStatus(trackingNumber, carrier) {
+            if (!trackingNumber || trackingNumber.trim() === '') {
+                return Promise.resolve({ status: 'unknown', statusText: 'No tracking number' });
+            }
+
+            carrier = carrier || 'auto';
+            var cacheKey = trackingNumber + '_' + carrier;
+            var cached = trackingCache.get(cacheKey);
+            if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+                return Promise.resolve(cached.data);
+            }
+
+            return fetch(TRACKING_API_URL + '?trackingNumber=' + encodeURIComponent(trackingNumber) + '&carrier=' + carrier)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    trackingCache.set(cacheKey, {
+                        data: data,
+                        timestamp: Date.now()
+                    });
+                    return data;
+                })
+                .catch(function(error) {
+                    console.error('Tracking API error:', error);
+                    return { 
+                        status: 'unknown', 
+                        statusText: 'API Error',
+                        error: error.message 
+                    };
+                });
+        }
+
+        function detectCarrier(trackingNumber) {
+            if (!trackingNumber) return 'auto';
+            
+            var cleanNumber = trackingNumber.replace(/\s/g, '');
+            
+            if (/^1Z[0-9A-Z]{16}$/i.test(cleanNumber)) {
+                return 'ups';
+            }
+            
+            if (/^[0-9]{12,14}$/.test(cleanNumber) || /^[0-9]{4}\s?[0-9]{4}\s?[0-9]{4}$/.test(cleanNumber)) {
+                return 'fedex';
+            }
+            
+            if (/^(94|93|92|94|70|14|23|03)[0-9]{20}$/.test(cleanNumber) || 
+                /^[A-Z]{2}[0-9]{9}US$/.test(cleanNumber)) {
+                return 'usps';
+            }
+            
+            if (/^[0-9]{10,11}$/.test(cleanNumber)) {
+                return 'dhl';
+            }
+            
+            return 'auto';
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'unknown': return 'Unknown';
+                case 'pending': return 'Pending';
+                case 'shipped': return 'In Transit';
+                case 'delivered': return 'Delivered';
+                default: return 'Unknown';
+            }
+        }
+
+        function trackPackage(trackingNumber) {
+            if (trackingNumber && trackingNumber.trim()) {
+                window.open('https://www.google.com/search?q=' + encodeURIComponent(trackingNumber + ' tracking'), '_blank');
+            }
+        }
+
+        function refreshTrackingStatus(trackingNumber, elementId, carrier) {
+            if (!trackingNumber) return;
+
+            var statusElement = document.getElementById(elementId);
+            if (!statusElement) return;
+
+            statusElement.className = 'tracking-status status-loading';
+            statusElement.innerHTML = '⟳ Loading...';
+
+            getTrackingStatus(trackingNumber, carrier || 'auto')
+                .then(function(trackingData) {
+                    statusElement.className = 'tracking-status status-' + trackingData.status;
+                    statusElement.innerHTML = '● ' + (trackingData.statusText || getStatusText(trackingData.status)).toUpperCase();
+                    
+                    var infoElement = document.getElementById(elementId.replace('status', 'info'));
+                    if (infoElement && trackingData.location) {
+                        infoElement.textContent = trackingData.location;
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error refreshing tracking:', error);
+                    statusElement.className = 'tracking-status status-unknown';
+                    statusElement.innerHTML = '● Error';
+                });
+        }
+
+        function refreshAllTracking() {
+            console.log('Refreshing all tracking data...');
+            trackingCache.clear();
+            renderEntries();
+            console.log('All tracking data refreshed');
+        }
+
+        function createEntry(data) {
+            var entry = {
+                id: ++entryCounter,
+                date: data.date || '',
+                item: data.item || '',
+                card: data.card || Object.keys(cards)[0],
+                amount: data.amount || 0,
+                shippingCost: data.shippingCost || 0,
+                shippingCard: data.shippingCard || Object.keys(cards)[0],
+                incomingTracking: data.incomingTracking || '',
+                resold: data.resold || false,
+                salePrice: data.salePrice || 0,
+                outgoingTracking: data.outgoingTracking || '',
+                outgoingDate: data.outgoingDate || ''
+            };
+            
+            allEntries.unshift(entry);
+            return entry;
+        }
+
+        // Modal functions
+        function openEntryModal() {
+            document.getElementById('entryModal').style.display = 'block';
+            populateCardSelect();
+            clearForm();
+        }
+
+        function closeEntryModal() {
+            document.getElementById('entryModal').style.display = 'none';
+        }
+
+        function clearForm() {
+            document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('entryItem').value = '';
+            document.getElementById('entryAmount').value = '';
+            document.getElementById('entryShippingCost').value = '';
+            document.getElementById('entryIncomingTracking').value = '';
+            document.getElementById('entryResold').value = 'false';
+            document.getElementById('entrySalePrice').value = '';
+            document.getElementById('entryOutgoingTracking').value = '';
+            document.getElementById('entryOutgoingDate').value = '';
+            
+            toggleOutgoingSection();
+            
+            isEditMode = false;
+            editingEntryId = null;
+            var submitBtn = document.getElementById('submitBtn');
+            var modalTitle = document.getElementById('entryModalTitle');
+            if (submitBtn) submitBtn.textContent = '✅ Add Entry';
+            if (modalTitle) modalTitle.textContent = '➕ Add New Purchase';
+        }
+
+        function populateCardSelect() {
+            var select = document.getElementById('entryCard');
+            var shippingSelect = document.getElementById('entryShippingCard');
+            if (!select || !shippingSelect) return;
+            
+            var options = '';
+            for (var cardName in cards) {
+                var rate = cards[cardName];
+                var percentage = (rate * 100).toFixed(1);
+                options += '<option value="' + cardName + '">' + cardName + ' (' + percentage + '%)</option>';
+            }
+            select.innerHTML = options;
+            shippingSelect.innerHTML = options;
+        }
+
+        function toggleOutgoingSection() {
+            var resold = document.getElementById('entryResold').value === 'true';
+            var outgoingSection = document.getElementById('outgoingSection');
+            var salePriceInput = document.getElementById('entrySalePrice');
+            
+            if (resold) {
+                outgoingSection.classList.add('visible');
+                salePriceInput.disabled = false;
+            } else {
+                outgoingSection.classList.remove('visible');
+                salePriceInput.disabled = true;
+                salePriceInput.value = '';
+                document.getElementById('entryOutgoingTracking').value = '';
+                document.getElementById('entryOutgoingDate').value = '';
+            }
+        }
+
+        function addEntry() {
+            var date = document.getElementById('entryDate').value;
+            var item = document.getElementById('entryItem').value.trim();
+            var card = document.getElementById('entryCard').value;
+            var amount = parseFloat(document.getElementById('entryAmount').value) || 0;
+            var shippingCost = parseFloat(document.getElementById('entryShippingCost').value) || 0;
+            var shippingCard = document.getElementById('entryShippingCard').value;
+            var incomingTracking = document.getElementById('entryIncomingTracking').value.trim();
+            var resold = document.getElementById('entryResold').value === 'true';
+            var salePrice = parseFloat(document.getElementById('entrySalePrice').value) || 0;
+            var outgoingTracking = document.getElementById('entryOutgoingTracking').value.trim();
+            var outgoingDate = document.getElementById('entryOutgoingDate').value;
+
+            if (!item) {
+                alert('Please enter an item name.');
+                return;
+            }
+
+            if (amount <= 0) {
+                alert('Please enter a valid purchase amount.');
+                return;
+            }
+
+            var entry = {
+                id: ++entryCounter,
+                date: date,
+                item: item,
+                card: card,
+                amount: amount,
+                shippingCost: shippingCost,
+                shippingCard: shippingCard,
+                incomingTracking: incomingTracking,
+                resold: resold,
+                salePrice: resold ? salePrice : 0,
+                outgoingTracking: resold ? outgoingTracking : '',
+                outgoingDate: resold ? outgoingDate : ''
+            };
+
+            if (isEditMode) {
+                var entryIndex = allEntries.findIndex(function(e) { return e.id === editingEntryId; });
+                if (entryIndex !== -1) {
+                    entry.id = editingEntryId;
+                    allEntries[entryIndex] = entry;
+                }
+            } else {
+                allEntries.unshift(entry);
+            }
+
+            saveDataToStorage();
+            closeEntryModal();
+            filterEntries();
+            updateDashboard();
+        }
+
+        function startEdit(entryId) {
+            var entry = allEntries.find(function(e) { return e.id === entryId; });
+            if (!entry) return;
+
+            openEntryModal();
+            
+            document.getElementById('entryDate').value = entry.date;
+            document.getElementById('entryItem').value = entry.item;
+            document.getElementById('entryCard').value = entry.card;
+            document.getElementById('entryAmount').value = entry.amount;
+            document.getElementById('entryShippingCost').value = entry.shippingCost || '';
+            document.getElementById('entryShippingCard').value = entry.shippingCard || entry.card;
+            document.getElementById('entryIncomingTracking').value = entry.incomingTracking || '';
+            document.getElementById('entryResold').value = entry.resold ? 'true' : 'false';
+            document.getElementById('entrySalePrice').value = entry.resold ? entry.salePrice : '';
+            document.getElementById('entryOutgoingTracking').value = entry.outgoingTracking || '';
+            document.getElementById('entryOutgoingDate').value = entry.outgoingDate || '';
+
+            toggleOutgoingSection();
+
+            isEditMode = true;
+            editingEntryId = entryId;
+            var submitBtn = document.getElementById('submitBtn');
+            var modalTitle = document.getElementById('entryModalTitle');
+            submitBtn.textContent = '✏️ Update Entry';
+            modalTitle.textContent = '✏️ Edit Purchase';
+        }
+
+        function deleteEntry(entryId) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                allEntries = allEntries.filter(function(entry) { return entry.id !== entryId; });
+                saveDataToStorage();
+                filterEntries();
+                updateDashboard();
+            }
+        }
+
+        function toggleDetails(entryId) {
+            var detailsSection = document.getElementById('details-' + entryId);
+            var toggleIcon = document.getElementById('toggle-' + entryId);
+            
+            if (detailsSection.classList.contains('visible')) {
+                detailsSection.classList.remove('visible');
+                toggleIcon.classList.remove('expanded');
+            } else {
+                detailsSection.classList.add('visible');
+                toggleIcon.classList.add('expanded');
+            }
+        }
+
+        // Card management functions
+        function openCardModal() {
+            document.getElementById('cardModal').style.display = 'block';
+            renderCardList();
+        }
+
+        function closeCardModal() {
+            document.getElementById('cardModal').style.display = 'none';
+            document.getElementById('newCardName').value = '';
+            document.getElementById('newCardRate').value = '';
+        }
+
+        function renderCardList() {
+            var cardList = document.getElementById('cardList');
+            var html = '';
+            for (var cardName in cards) {
+                var rate = cards[cardName];
+                html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin: 5px 0; border-radius: 5px;">';
+                html += '<span><strong>' + cardName + '</strong> - ' + (rate * 100).toFixed(1) + '% Cash Back</span>';
+                html += '<button class="btn btn-danger" onclick="deleteCard(\'' + cardName + '\')">Delete</button>';
+                html += '</div>';
+            }
+            cardList.innerHTML = html;
+        }
+
+        function addNewCard() {
+            var name = document.getElementById('newCardName').value.trim();
+            var rate = parseFloat(document.getElementById('newCardRate').value);
+
+            if (!name) {
+                alert('Please enter a card name.');
+                return;
+            }
+
+            if (isNaN(rate) || rate < 0) {
+                alert('Please enter a valid cash back rate.');
+                return;
+            }
+
+            cards[name] = rate / 100;
+            saveDataToStorage();
+            renderCardList();
+            populateCardSelect();
+
+            document.getElementById('newCardName').value = '';
+            document.getElementById('newCardRate').value = '';
+        }
+
+        function deleteCard(cardName) {
+            if (Object.keys(cards).length <= 1) {
+                alert('You must have at least one credit card.');
+                return;
+            }
+
+            if (confirm('Delete "' + cardName + '"?')) {
+                delete cards[cardName];
+                saveDataToStorage();
+                renderCardList();
+                populateCardSelect();
+                filterEntries();
+                updateDashboard();
+            }
+        }
+
+        // Display functions
+        function filterEntries() {
+            var searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                filteredEntries = allEntries.slice();
+            } else {
+                filteredEntries = allEntries.filter(function(entry) {
+                    return entry.item.toLowerCase().includes(searchTerm) ||
+                           entry.card.toLowerCase().includes(searchTerm) ||
+                           (entry.shippingCard && entry.shippingCard.toLowerCase().includes(searchTerm)) ||
+                           entry.date.includes(searchTerm) ||
+                           (entry.incomingTracking && entry.incomingTracking.toLowerCase().includes(searchTerm)) ||
+                           (entry.outgoingTracking && entry.outgoingTracking.toLowerCase().includes(searchTerm));
+                });
+            }
+            
+            renderEntries();
+        }
+
+        function renderEntries() {
+            var container = document.getElementById('entriesContainer');
+            var count = document.getElementById('entriesCount');
+            
+            count.textContent = filteredEntries.length + ' entries' + (filteredEntries.length !== allEntries.length ? ' (filtered)' : '');
+
+            if (filteredEntries.length === 0) {
+                if (allEntries.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">📦</div><h3>No purchases yet</h3><p>Add your first purchase above to get started!</p></div>';
+                } else {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><h3>No matching entries</h3><p>Try a different search term or clear the search to see all entries.</p></div>';
+                }
+                return;
+            }
+
+            var html = '';
+
+            for (var i = 0; i < filteredEntries.length; i++) {
+                var entry = filteredEntries[i];
+                var metrics = calculateMetrics(entry);
+                var profitClass = metrics.profit > 0 ? 'profit-positive' : metrics.profit < 0 ? 'profit-negative' : 'profit-zero';
+                var totalCost = (parseFloat(entry.amount) || 0) + (parseFloat(entry.shippingCost) || 0);
+                
+                html += '<div class="entry-card">';
+                
+                html += '<div class="entry-header">';
+                html += '<div class="entry-title">';
+                html += '<div class="entry-date-header">' + formatDate(entry.date) + '</div>';
+                html += '<div class="item-name">' + entry.item + '</div>';
+                html += '</div>';
+                html += '<div class="entry-actions">';
+                html += '<button class="edit-btn" onclick="startEdit(' + entry.id + ')">Edit</button>';
+                html += '<button class="delete-btn" onclick="deleteEntry(' + entry.id + ')">Delete</button>';
+                html += '</div>';
+                html += '</div>';
+                
+                html += '<div class="financial-summary">';
+                html += '<div class="cost-info">';
+                
+                html += '<div class="cost-item">';
+                html += '<div class="cost-label">Total Cost</div>';
+                html += '<div class="cost-value">' + formatCurrency(totalCost) + '</div>';
+                html += '</div>';
+                
+                if (entry.resold && entry.salePrice > 0) {
+                    html += '<div class="cost-item">';
+                    html += '<div class="cost-label">Sale Price</div>';
+                    html += '<div class="cost-value sale-value">' + formatCurrency(entry.salePrice) + '</div>';
+                    html += '</div>';
+                }
+                
+                html += '<div class="cost-item">';
+                html += '<div class="cost-label">Cash Profit</div>';
+                html += '<div class="cost-value ' + (entry.resold ? (metrics.cashProfit > 0 ? 'sale-value' : 'profit-negative') : 'profit-zero') + '">' + 
+                    formatCurrency(metrics.cashProfit) + '</div>';
+                html += '</div>';
+                
+                html += '<div class="cost-item">';
+                html += '<div class="cost-label">Cash Back</div>';
+                html += '<div class="cost-value" style="color: #17a2b8;">' + formatCurrency(metrics.cashBack) + '</div>';
+                html += '</div>';
+                
+                html += '</div>';
+                
+                html += '<div class="profit-info">';
+                if (entry.resold) {
+                    html += '<div class="profit-amount ' + profitClass + '">' + formatCurrency(metrics.profit) + '</div>';
+                    html += '<div class="cashback-info">Total Profit</div>';
+                } else {
+                    html += '<div class="profit-amount profit-zero">' + formatCurrency(metrics.cashBack) + '</div>';
+                    html += '<div class="cashback-info">Rewards Only</div>';
+                }
+                html += '</div>';
+                
+                html += '</div>';
+                
+                html += '<button class="details-toggle" onclick="toggleDetails(' + entry.id + ')">';
+                html += '<span class="toggle-icon" id="toggle-' + entry.id + '">▶</span>';
+                html += 'Show Details';
+                html += '</button>';
+                
+                html += '<div class="entry-details" id="details-' + entry.id + '">';
+                
+                html += '<div class="detail-section">';
+                html += '<div class="section-title">Purchase Details</div>';
+                
+                html += '<div class="detail-row">';
+                html += '<div class="detail-label">Purchase Card</div>';
+                html += '<div class="detail-value"><span class="card-chip">' + entry.card + '</span></div>';
+                html += '</div>';
+                
+                html += '<div class="detail-row">';
+                html += '<div class="detail-label">Item Cost</div>';
+                html += '<div class="detail-value">' + formatCurrency(entry.amount) + '</div>';
+                html += '</div>';
+                
+                html += '<div class="detail-row">';
+                html += '<div class="detail-label">Shipping Card</div>';
+                html += '<div class="detail-value"><span class="card-chip">' + (entry.shippingCard || entry.card) + '</span></div>';
+                html += '</div>';
+                
+                html += '<div class="detail-row">';
+                html += '<div class="detail-label">Shipping Cost</div>';
+                html += '<div class="detail-value">' + (entry.shippingCost > 0 ? formatCurrency(entry.shippingCost) : '$0.00') + '</div>';
+                html += '</div>';
+                
+                html += '</div>';
+                
+                html += '<div class="detail-section">';
+                html += '<div class="section-title">Sale Details</div>';
+                
+                html += '<div class="detail-row">';
+                html += '<div class="detail-label">Status</div>';
+                html += '<div class="detail-value">' + (entry.resold ? 'Sold' : 'Not sold') + '</div>';
+                html += '</div>';
+                
+                html += '<div class="detail-row">';
+                html += '<div class="detail-label">Sale Price</div>';
+                html += '<div class="detail-value">' + (entry.resold ? formatCurrency(entry.salePrice) : '-') + '</div>';
+                html += '</div>';
+                
+                html += '<div class="detail-row">';
+                html += '<div class="detail-label">Cash Back Earned</div>';
+                html += '<div class="detail-value" style="color: #17a2b8; font-weight: 600;">' + formatCurrency(metrics.cashBack) + '</div>';
+                html += '</div>';
+                
+                if (entry.resold) {
+                    html += '<div class="detail-row">';
+                    html += '<div class="detail-label">Ship Date</div>';
+                    html += '<div class="detail-value">' + (entry.outgoingDate ? formatDate(entry.outgoingDate) : '-') + '</div>';
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+                
+                html += '</div>';
+                
+                // Tracking section with real API integration
+                if (entry.incomingTracking || entry.resold) {
+                    html += '<div class="tracking-section">';
+                    html += '<div style="margin-bottom: 8px; font-size: 12px; font-weight: 600; color: #495057; text-transform: uppercase;">Package Tracking</div>';
+                    html += '<div class="tracking-grid">';
+                    
+                    if (entry.incomingTracking) {
+                        var incomingStatusId = 'incoming-status-' + entry.id;
+                        var incomingInfoId = 'incoming-info-' + entry.id;
+                        
+                        html += '<div class="tracking-item incoming">';
+                        html += '<div class="tracking-header">';
+                        html += '<div class="tracking-label">📦 Incoming Package</div>';
+                        html += '<button class="tracking-refresh" onclick="refreshTrackingStatus(\'' + entry.incomingTracking + '\', \'' + incomingStatusId + '\', \'' + detectCarrier(entry.incomingTracking) + '\')">🔄</button>';
+                        html += '</div>';
+                        html += '<div class="tracking-status status-loading" id="' + incomingStatusId + '">⟳ Loading...</div>';
+                        html += '<div class="tracking-number" onclick="trackPackage(\'' + entry.incomingTracking + '\')" title="Click to track package">' + entry.incomingTracking + '</div>';
+                        html += '<div class="tracking-info" id="' + incomingInfoId + '">Fetching status...</div>';
+                        html += '</div>';
+                        
+                        setTimeout(function() {
+                            refreshTrackingStatus(entry.incomingTracking, incomingStatusId, detectCarrier(entry.incomingTracking));
+                        }, 100 * i);
+                    } else {
+                        html += '<div></div>';
+                    }
+                    
+                    if (entry.resold) {
+                        if (entry.outgoingTracking) {
+                            var outgoingStatusId = 'outgoing-status-' + entry.id;
+                            var outgoingInfoId = 'outgoing-info-' + entry.id;
+                            
+                            html += '<div class="tracking-item outgoing">';
+                            html += '<div class="tracking-header">';
+                            html += '<div class="tracking-label">🚚 Outgoing Package</div>';
+                            html += '<button class="tracking-refresh" onclick="refreshTrackingStatus(\'' + entry.outgoingTracking + '\', \'' + outgoingStatusId + '\', \'' + detectCarrier(entry.outgoingTracking) + '\')">🔄</button>';
+                            html += '</div>';
+                            html += '<div class="tracking-status status-loading" id="' + outgoingStatusId + '">⟳ Loading...</div>';
+                            html += '<div class="tracking-number" onclick="trackPackage(\'' + entry.outgoingTracking + '\')" title="Click to track package">' + entry.outgoingTracking + '</div>';
+                            if (entry.outgoingDate) {
+                                html += '<div class="tracking-date">Shipped: ' + formatDate(entry.outgoingDate) + '</div>';
+                            }
+                            html += '<div class="tracking-info" id="' + outgoingInfoId + '">Fetching status...</div>';
+                            html += '</div>';
+                            
+                            setTimeout(function() {
+                                refreshTrackingStatus(entry.outgoingTracking, outgoingStatusId, detectCarrier(entry.outgoingTracking));
+                            }, 150 * i);
+                        } else {
+                            html += '<div class="tracking-item awaiting">';
+                            html += '<div class="tracking-header">';
+                            html += '<div class="tracking-label">🚚 Outgoing Package</div>';
+                            html += '</div>';
+                            html += '<div class="tracking-status status-pending">';
+                            html += '● AWAITING SHIPMENT';
+                            html += '</div>';
+                            html += '<div style="color: #6c757d; font-style: italic; font-size: 11px;">No tracking number yet</div>';
+                            if (entry.outgoingDate) {
+                                html += '<div class="tracking-date">Shipped: ' + formatDate(entry.outgoingDate) + '</div>';
+                            }
+                            html += '</div>';
+                        }
+                    } else {
+                        html += '<div></div>';
+                    }
+                    
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function updateDashboard() {
+            var totalPurchases = 0;
+            var totalCashBack = 0;
+            var totalRevenue = 0;
+            var incomingPackages = 0;
+            var outgoingPackages = 0;
+            var netProfit = 0;
+
+            for (var i = 0; i < allEntries.length; i++) {
+                var entry = allEntries[i];
+                var amount = parseFloat(entry.amount) || 0;
+                var shippingCost = parseFloat(entry.shippingCost) || 0;
+                var salePrice = parseFloat(entry.salePrice) || 0;
+                var metrics = calculateMetrics(entry);
+
+                totalPurchases += amount + shippingCost;
+                totalCashBack += metrics.cashBack;
+                totalRevenue += salePrice;
+                netProfit += metrics.profit;
+
+                if (entry.incomingTracking) {
+                    incomingPackages++;
+                }
+                if (entry.outgoingTracking && entry.resold) {
+                    outgoingPackages++;
+                }
+            }
+
+            document.getElementById('totalPurchases').textContent = formatCurrency(totalPurchases);
+            document.getElementById('totalCashBack').textContent = formatCurrency(totalCashBack);
+            document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+            document.getElementById('netProfit').textContent = formatCurrency(netProfit);
+            document.getElementById('incomingPackages').textContent = incomingPackages;
+            document.getElementById('outgoingPackages').textContent = outgoingPackages;
+        }
+
+        // Export/Import functions
+        function exportCSV() {
+            var headers = ['Date', 'Item', 'Card', 'Amount', 'Shipping Cost', 'Shipping Card', 'Incoming Tracking', 'Resold', 'Sale Price', 'Outgoing Tracking', 'Ship Date'];
+            var csvRows = [headers.join(',')];
+
+            for (var i = 0; i < allEntries.length; i++) {
+                var entry = allEntries[i];
+                var row = [
+                    entry.date,
+                    '"' + entry.item.replace(/"/g, '""') + '"',
+                    entry.card,
+                    entry.amount,
+                    entry.shippingCost || 0,
+                    entry.shippingCard || entry.card,
+                    entry.incomingTracking || '',
+                    entry.resold ? 'Yes' : 'No',
+                    entry.salePrice || 0,
+                    entry.outgoingTracking || '',
+                    entry.outgoingDate || ''
+                ];
+                csvRows.push(row.join(','));
+            }
+
+            var csvContent = csvRows.join('\n');
+            var blob = new Blob([csvContent], { type: 'text/csv' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'purchase_tracker_' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importCSV(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var csvContent = e.target.result;
+                    var lines = csvContent.split('\n');
+                    
+                    allEntries = [];
+                    entryCounter = 0;
+
+                    for (var i = 1; i < lines.length; i++) {
+                        var line = lines[i].trim();
+                        if (!line) continue;
+
+                        var values = line.split(',');
+                        if (values.length < 4) continue;
+
+                        var entry = {
+                            id: ++entryCounter,
+                            date: values[0] || '',
+                            item: values[1].replace(/"/g, '') || '',
+                            card: values[2] || Object.keys(cards)[0],
+                            amount: parseFloat(values[3]) || 0,
+                            shippingCost: parseFloat(values[4]) || 0,
+                            shippingCard: values[5] || Object.keys(cards)[0],
+                            incomingTracking: values[6] || '',
+                            resold: values[7] === 'Yes',
+                            salePrice: parseFloat(values[8]) || 0,
+                            outgoingTracking: values[9] || '',
+                            outgoingDate: values[10] || ''
+                        };
+
+                        allEntries.unshift(entry);
+                    }
+
+                    saveDataToStorage();
+                    filterEntries();
+                    updateDashboard();
+                    alert('CSV imported successfully!');
+
+                } catch (error) {
+                    alert('Error importing CSV: ' + error.message);
+                }
+            };
+
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function clearAllData() {
+            if (confirm('This will delete ALL purchase entries and reset credit cards to defaults. Are you sure?')) {
+                allEntries = [];
+                entryCounter = 0;
+                cards = {
+                    'Chase Reserve': 0.01,
+                    'Wells Fargo': 0.02,
+                    'Farmers Credit Union': 0.025
+                };
+                
+                trackingCache.clear();
+                
+                saveDataToStorage();
+                filterEntries();
+                updateDashboard();
+                
+                alert('All data has been cleared.');
+            }
+        }
+
+        // Data storage functions
+        function saveDataToStorage() {
+            try {
+                var data = {
+                    entries: allEntries,
+                    cards: cards,
+                    entryCounter: entryCounter
+                };
+                localStorage.setItem('deloreanVaultData', JSON.stringify(data));
+            } catch (error) {
+                console.error('Error saving to localStorage:', error);
+            }
+        }
+
+        function loadDataFromStorage() {
+            try {
+                var saved = localStorage.getItem('deloreanVaultData');
+                if (saved) {
+                    var data = JSON.parse(saved);
+                    
+                    if (data.entries && Array.isArray(data.entries)) {
+                        allEntries = data.entries;
+                    }
+                    
+                    if (data.cards && typeof data.cards === 'object') {
+                        cards = data.cards;
+                    }
+                    
+                    if (data.entryCounter && typeof data.entryCounter === 'number') {
+                        entryCounter = data.entryCounter;
+                    }
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error loading from localStorage:', error);
+            }
+            return false;
+        }
+
+        // Event listeners
+        document.addEventListener('click', function(event) {
+            if (event.target.id === 'cardModal') {
+                closeCardModal();
+            }
+            if (event.target.id === 'entryModal') {
+                closeEntryModal();
+            }
+        });
+
+        // Initialize app
+        function initApp() {
+            console.log('Initializing DeLorean Vault with live tracking...');
+            
+            var today = new Date().toISOString().split('T')[0];
+            var dateInput = document.getElementById('entryDate');
+            if (dateInput) {
+                dateInput.value = today;
+            }
+            
+            if (!loadDataFromStorage()) {
+                console.log('Loading sample data...');
+                allEntries = [];
+                entryCounter = 0;
+                for (var i = 0; i < sampleData.length; i++) {
+                    createEntry(sampleData[i]);
+                }
+                saveDataToStorage();
+            }
+            
+            populateCardSelect();
+            filterEntries();
+            updateDashboard();
+            
+            console.log('App initialized successfully with live tracking!');
+        }
+
+        // Focus password field on load
+        window.addEventListener('load', function() {
+            document.getElementById('passwordField').focus();
+        });
+    </script>
+</body>
+</html>
